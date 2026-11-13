@@ -1,0 +1,236 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 15: inducción y esquemas
+:: ====================================================================
+::  Un esquema es un teorema con parámetros que son predicados (P[...])
+::  o funciones (F(...)). Se usa con "from" en lugar de "by":
+::       enunciado from ARTICULO:sch N(premisa1,premisa2);
+::  El más usado es el de inducción, NAT_1:sch 2:
+::       scheme NatInd { P[Nat] } : for k being Nat holds P[k]
+::       provided P[0] and for k being Nat st P[k] holds P[k + 1];
+::  El predicado P se define antes con "defpred"; en su definición, $1
+::  es el argumento.
+
+environ
+
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, FUNCT_1, XXREAL_0, CARD_1,
+   REAL_1, NAT_1, NEWTON, SEQ_1, SUBSET_1;
+ notations TARSKI, XBOOLE_0, SUBSET_1, ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0,
+   XXREAL_0, RELAT_1, FUNCT_1, FUNCT_2, NAT_1, VALUED_0, SEQ_1, NEWTON;
+ constructors REAL_1, NAT_1, SEQ_1, NEWTON, FUNCT_2, VALUED_0;
+ registrations XBOOLE_0, ORDINAL1, XREAL_0, NUMBERS, NAT_1, MEMBERED,
+   VALUED_0, FUNCT_2, NEWTON, XXREAL_0;
+ requirements REAL, NUMERALS, SUBSET, BOOLE, ARITHM;
+ theorems XREAL_1, XXREAL_0, NAT_1, NEWTON;
+ schemes NAT_1, SEQ_1;
+
+begin
+
+reserve n,k for Nat;
+reserve s for Real_Sequence;
+
+:: La suma de Gauss. La sucesión s de sumas parciales 0, 1, 1+2, 1+2+3,
+:: ... se describe por recurrencia, y se demuestra s(n) = n(n+1)/2.
+
+theorem Gauss:
+  s.0 = 0 & (for n holds s.(n + 1) = s.n + (n + 1))
+    implies for n holds s.n = n*(n + 1)/2
+proof
+  assume that
+A1: s.0 = 0 and
+A2: for n holds s.(n + 1) = s.n + (n + 1);
+  defpred P[Nat] means s.$1 = $1*($1 + 1)/2;
+A3: P[0] by A1;
+A4: for k st P[k] holds P[k + 1]
+  proof
+    let k;
+    assume P[k];
+    then s.(k + 1) = k*(k + 1)/2 + (k + 1) by A2;
+    hence thesis;
+  end;
+  thus for n holds P[n] from NAT_1:sch 2(A3,A4);
+end;
+
+:: La suma de los primeros n impares es n al cuadrado:
+:: 1 + 3 + 5 + ... + (2n - 1) = n*n.
+
+theorem Impares:
+  s.0 = 0 & (for n holds s.(n + 1) = s.n + (2*n + 1))
+    implies for n holds s.n = n*n
+proof
+  assume that
+A1: s.0 = 0 and
+A2: for n holds s.(n + 1) = s.n + (2*n + 1);
+  :: EJERCICIO 1: Define el predicado de inducción P con defpred: P[n] debe
+  ::   decir "s.n = n*n" (escribe $1 donde iría n).
+  defpred P[Nat] means s.$1 = $1*$1;
+A3: P[0] by A1;
+A4: for k st P[k] holds P[k + 1]
+  proof
+    let k;
+    assume P[k];
+    :: EJERCICIO 2: Paso inductivo. Con then, usa la recurrencia A2 para
+    ::   escribir s.(k + 1) a partir de la hipótesis inductiva:
+    ::   s.(k + 1) = k*k + (2*k + 1)
+    ::   y concluye con "hence thesis;" (el resto es un binomio).
+    then s.(k + 1) = k*k + (2*k + 1) by A2;
+    hence thesis;
+  end;
+  :: EJERCICIO 3: Cierra la demostración aplicando el esquema de inducción
+  ::   NAT_1:sch 2 a las premisas A3 y A4 (un renglón con thus ... from).
+  thus for n holds P[n] from NAT_1:sch 2(A3,A4);
+end;
+
+:: Una desigualdad: n < 2^n. La potencia con exponente natural es |^ y
+:: sus dos propiedades básicas son NEWTON:4 (z|^0 = 1) y NEWTON:6
+:: (z|^(k+1) = z|^k * z).
+
+theorem
+  for n holds n < 2|^n
+proof
+  defpred P[Nat] means $1 < 2|^$1;
+A1: P[0] by NEWTON:4;
+A2: for k st P[k] holds P[k + 1]
+  proof
+    let k;
+    assume
+A3: P[k];
+    0 <= k by NAT_1:2;
+    then 0 + 1 <= 2|^k by A3,NAT_1:13;
+    then k + 1 < 2|^k + 2|^k by A3,XREAL_1:8;
+    then k + 1 < 2|^k*2;
+    hence thesis by NEWTON:6;
+  end;
+  thus for n holds P[n] from NAT_1:sch 2(A1,A2);
+end;
+
+:: La desigualdad de Bernoulli: (1 + x)^n >= 1 + n*x si x >= -1.
+
+theorem Bernoulli:
+  for x being Real st -1 <= x holds for n holds 1 + n*x <= (1 + x)|^n
+proof
+  let x be Real;
+  assume -1 <= x;
+  then -1 + 1 <= x + 1 by XREAL_1:6;
+  then
+A1: 0 <= 1 + x;
+  defpred P[Nat] means 1 + $1*x <= (1 + x)|^$1;
+A2: P[0] by NEWTON:4;
+A3: for k st P[k] holds P[k + 1]
+  proof
+    let k;
+    assume P[k];
+    then (1 + k*x)*(1 + x) <= (1 + x)|^k*(1 + x) by A1,XREAL_1:64;
+    then
+A4: (1 + k*x)*(1 + x) <= (1 + x)|^(k + 1) by NEWTON:6;
+    :: EJERCICIO 4: Falta ver que 1 + (k + 1)*x <= (1 + k*x)*(1 + x). La
+    ::   diferencia entre ambos es k*(x*x), que es >= 0. Escribe:
+    ::   (1) "0 <= k & 0 <= x*x" (por NAT_1:2 y XREAL_1:63);
+    ::   (2) con then, "0 <= k*(x*x)" (por XREAL_1:127);
+    ::   (3) con then, "1 + (k + 1)*x + 0 <= 1 + (k + 1)*x + k*(x*x)"
+    ::   (por XREAL_1:6).
+    0 <= k & 0 <= x*x by NAT_1:2,XREAL_1:63;
+    then 0 <= k*(x*x) by XREAL_1:127;
+    then 1 + (k + 1)*x + 0 <= 1 + (k + 1)*x + k*(x*x) by XREAL_1:6;
+    hence thesis by A4,XXREAL_0:2;
+  end;
+  thus for n holds P[n] from NAT_1:sch 2(A2,A3);
+end;
+
+:: Un esquema propio: inducción empezando en 1. Los esquemas se
+:: demuestran como los teoremas; las premisas van después de "provided".
+
+scheme IndDesde1 { P[Nat] } :
+  for n st 1 <= n holds P[n]
+provided
+A1: P[1] and
+A2: for k st 1 <= k & P[k] holds P[k + 1]
+proof
+  defpred Q[Nat] means 1 <= $1 implies P[$1];
+A3: Q[0];
+A4: for k st Q[k] holds Q[k + 1]
+  proof
+    let k;
+    assume
+A5: Q[k];
+    assume 1 <= k + 1;
+    per cases by NAT_1:14;
+    suppose k = 0;
+      hence P[k + 1] by A1;
+    end;
+    suppose
+A6:   1 <= k;
+      then P[k] by A5;
+      hence P[k + 1] by A2,A6;
+    end;
+  end;
+  for n holds Q[n] from NAT_1:sch 2(A3,A4);
+  hence thesis;
+end;
+
+:: Uso del esquema propio (como está en este mismo artículo, se cita
+:: por su nombre).
+
+theorem
+  for n st 1 <= n holds 2*n <= 2|^n
+proof
+  defpred P[Nat] means 2*$1 <= 2|^$1;
+A1: P[1] by NEWTON:5;
+A2: for k st 1 <= k & P[k] holds P[k + 1]
+  proof
+    let k;
+    assume that
+A3: 1 <= k and
+A4: P[k];
+    1*2 <= k*2 by A3,XREAL_1:64;
+    then 2 <= 2|^k by A4,XXREAL_0:2;
+    :: EJERCICIO 5: Con then, suma esa desigualdad con la hipótesis inductiva
+    ::   A4 (teorema XREAL_1:7) para obtener
+    ::   2*k + 2 <= 2|^k + 2|^k
+    ::   y después, con otro then, reescribe el lado derecho:
+    ::   2*(k + 1) <= 2|^k*2
+    then 2*k + 2 <= 2|^k + 2|^k by A4,XREAL_1:7;
+    then 2*(k + 1) <= 2|^k*2;
+    hence thesis by NEWTON:6;
+  end;
+  thus for n st 1 <= n holds P[n] from IndDesde1(A1,A2);
+end;
+
+:: "deffunc" define un functor local (una fórmula con nombre), igual
+:: que defpred define un predicado local. Con el esquema SEQ_1:sch 1,
+::     scheme ExRealSeq { F(object) -> Real } :
+::       ex seq st for n holds seq.n = F(n);
+:: se construye la sucesión cuyo término general es F. Así se demuestra
+:: que la sucesión de la que habla el teorema de Gauss existe.
+
+theorem
+  ex s st s.0 = 0 & for n holds s.(n + 1) = s.n + (n + 1)
+proof
+  deffunc F(Nat) = $1*($1 + 1)/2;
+  consider s such that
+A1: for n holds s.n = F(n) from SEQ_1:sch 1;
+  take s;
+  thus s.0 = F(0) by A1
+    .= 0;
+  let n;
+  thus s.(n + 1) = F(n + 1) by A1
+    .= F(n) + (n + 1)
+    .= s.n + (n + 1) by A1;
+end;
+
+theorem
+  ex s st s.0 = 0 & for n holds s.(n + 1) = s.n + (2*n + 1)
+proof
+  :: EJERCICIO 6: Define con deffunc el término general F de la sucesión de
+  ::   las sumas de impares (recuerda el teorema Impares: la suma de los
+  ::   primeros n impares es n*n).
+  deffunc F(Nat) = $1*$1;
+  consider s such that
+A1: for n holds s.n = F(n) from SEQ_1:sch 1;
+  take s;
+  thus s.0 = F(0) by A1
+    .= 0;
+  let n;
+  thus s.(n + 1) = F(n + 1) by A1
+    .= F(n) + (2*n + 1)
+    .= s.n + (2*n + 1) by A1;
+end;

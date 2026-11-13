@@ -1,0 +1,124 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 8: desigualdades y búsqueda en la MML
+:: ====================================================================
+::  Las desigualdades casi nunca son automáticas: se justifican con
+::  teoremas de XXREAL_0 (orden) y XREAL_1 (orden y operaciones).
+::  Para Mizar, "a < b" es sólo otra forma de escribir "not b <= a", y
+::  "a >= b" es "b <= a". Por eso un mismo teorema sirve para varias
+::  variantes de una desigualdad.
+
+environ
+
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   SQUARE_1, COMPLEX1;
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, COMPLEX1,
+   SQUARE_1;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, COMPLEX1, SQUARE_1;
+ registrations ORDINAL1, XREAL_0, SQUARE_1;
+ requirements REAL, NUMERALS, SUBSET, ARITHM;
+ equalities SQUARE_1;
+ theorems XCMPLX_1, XREAL_1, XXREAL_0, SQUARE_1, COMPLEX1;
+
+begin
+
+reserve a,b,c,d,x,y for Real;
+
+:: Lo poco que sí es automático: comparar numerales (requirements REAL)
+:: y las propiedades declaradas en la definición de <= (reflexividad y
+:: conexidad).
+
+theorem
+  3 < 5 & 1/2 < 1 & -1 < 0;
+
+theorem
+  a <= a & (a <= b or b <= a);
+
+theorem
+  a < b implies a <= b & a <> b;
+
+:: Transitividad: XXREAL_0:2 dice  a <= b & b <= c implies a <= c ...
+
+theorem
+  a <= b & b <= c implies a <= c by XXREAL_0:2;
+
+:: ... y el MISMO teorema sirve cuando alguna desigualdad es estricta,
+:: porque "a < c" es "not c <= a" (se usa el teorema por contrarrecíproca).
+
+theorem
+  a < b & b <= c implies a < c by XXREAL_0:2;
+
+:: Monotonía de la suma y del producto.
+
+theorem
+  a <= b implies a + c <= b + c by XREAL_1:6;
+
+theorem
+  a <= b & 0 <= c implies a*c <= b*c by XREAL_1:64;
+
+:: Ejemplo: 2ab <= a^2 + b^2, porque (a - b)^2 >= 0.
+
+theorem DosAB:
+  2*a*b <= a^2 + b^2
+proof
+  0 <= (a - b)*(a - b) by XREAL_1:63;
+  then 0 <= (a^2 + b^2) - 2*a*b;
+  hence thesis by XREAL_1:49;
+end;
+
+:: XREAL_1:49 dice "a < b implies a - b < 0". Leído al revés (por
+:: contrarrecíproca): "0 <= a - b implies b <= a". Mizar hace esa
+:: lectura sin que se lo pidan.
+
+theorem
+  a < b implies a < (a + b)/2
+proof
+  assume a < b;
+  :: EJERCICIO 1: Completa los dos pasos intermedios. Primero suma a en ambos
+  ::   miembros (XREAL_1:6) para obtener "a + a < a + b"; después divide
+  ::   por 2 (XREAL_1:74) para obtener "(a + a)/2 < (a + b)/2". Cada paso
+  ::   empieza con then.
+  hence thesis;
+end;
+
+theorem
+  0 < a & a < b implies 1/b < 1/a
+proof
+  assume
+A1: 0 < a & a < b;
+  :: EJERCICIO 2: Busca en XREAL_1 el teorema que invierte una desigualdad al
+  ::   pasar a los cocientes, por ejemplo con
+  ::   ./mml.py -g 'c/b < c/a' XREAL_1
+  ::   y escribe la conclusión:  thus thesis by A1,XREAL_1:(número);
+end;
+
+:: Media aritmética y media geométrica.
+
+theorem MAMG:
+  0 <= a & 0 <= b implies sqrt(a*b) <= (a + b)/2
+proof
+  assume
+A1: 0 <= a & 0 <= b;
+  then
+A2: (sqrt a)^2 = a & (sqrt b)^2 = b by SQUARE_1:def 2;
+A3: sqrt(a*b) = sqrt a * sqrt b by A1,SQUARE_1:29;
+  :: EJERCICIO 3: Imita la demostración de DosAB con sqrt a y sqrt b en
+  ::   lugar de a y b. Son tres pasos: (1) un cuadrado es >= 0 (XREAL_1:63);
+  ::   (2) "then 0 <= (a + b) - 2*sqrt(a*b) by A2,A3;"  y (3) pasar el
+  ::   sustraendo al otro miembro con XREAL_1:49, etiquetando el
+  ::   resultado como A4:  2*sqrt(a*b) <= a + b.
+  2*sqrt(a*b)/2 <= (a + b)/2 by A4,XREAL_1:72;
+  hence thesis;
+end;
+
+:: Valor absoluto: |.x.|. La desigualdad triangular es COMPLEX1:56.
+
+theorem
+  |.a + b.| <= |.a.| + |.b.| by COMPLEX1:56;
+
+theorem Triangular:
+  |.a - c.| <= |.a - b.| + |.b - c.|
+proof
+  :: EJERCICIO 4: Escribe la demostración (dos renglones). Aplica
+  ::   COMPLEX1:56 a los números (a - b) y (b - c); como su suma es
+  ::   a - c, la conclusión sale con "hence thesis;".
+end;

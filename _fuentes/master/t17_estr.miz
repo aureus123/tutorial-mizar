@@ -1,0 +1,160 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 17: estructuras
+:: ====================================================================
+::  Las estructuras son los "registros" de Mizar: objetos con campos.
+::  En la MML un magma multiplicativo es
+::     struct (1-sorted) multMagma
+::       (# carrier -> set, multF -> BinOp of the carrier #);
+::  y un grupo es un multMagma con ciertos adjetivos:
+::     mode Group is Group-like associative non empty multMagma;
+::  Si G es una estructura, "the carrier of G" es su conjunto subyacente
+::  y "Element of G" abrevia "Element of the carrier of G".
+::  Vocabulario dict/t17_estr.voc: GPunteado (estructura), Ubase (campo).
+
+environ
+
+ vocabularies NUMBERS, XBOOLE_0, SUBSET_1, STRUCT_0, ALGSTR_0, GROUP_1,
+   BINOP_1, FUNCT_1, RELAT_1, ZFMISC_1, TARSKI, CARD_1, T17_ESTR;
+ notations TARSKI, ZFMISC_1, XBOOLE_0, SUBSET_1, ORDINAL1, NUMBERS, RELAT_1,
+   FUNCT_1, FUNCT_2, BINOP_1, STRUCT_0, ALGSTR_0, GROUP_1;
+ constructors BINOP_1, STRUCT_0, ALGSTR_0, GROUP_1, RELSET_1, NUMBERS;
+ registrations XBOOLE_0, ORDINAL1, RELSET_1, NUMBERS, STRUCT_0, ALGSTR_0,
+   GROUP_1;
+ requirements NUMERALS, SUBSET, BOOLE;
+ theorems GROUP_1, ORDINAL1;
+
+begin
+
+reserve G for Group;
+reserve a,b,c for Element of G;
+
+:: Los axiomas de grupo, tal como se citan desde GROUP_1. La operación
+:: es *, el neutro es 1_G y el inverso de a es a".
+
+theorem
+  (a*b)*c = a*(b*c) by GROUP_1:def 3;
+
+theorem
+  a*1_G = a & 1_G*a = a by GROUP_1:def 4;
+
+theorem
+  a*a" = 1_G & a"*a = 1_G by GROUP_1:def 5;
+
+:: Ley de cancelación a izquierda, demostrada "a mano": se multiplica a
+:: la izquierda por el inverso de a.
+
+theorem Cancela:
+  a*b = a*c implies b = c
+proof
+  assume a*b = a*c;
+  then (a"*a)*b = a"*(a*c) by GROUP_1:def 3
+    .= (a"*a)*c by GROUP_1:def 3;
+  then 1_G*b = (a"*a)*c by GROUP_1:def 5
+    .= 1_G*c by GROUP_1:def 5;
+  then b = 1_G*c by GROUP_1:def 4;
+  hence thesis by GROUP_1:def 4;
+end;
+
+:: El único elemento idempotente de un grupo es el neutro.
+
+theorem
+  a*a = a implies a = 1_G
+proof
+  assume a*a = a;
+  ::@ej 1 | Reescribe la hipótesis como "a*a = a*1_G" (con then y el
+  ::@ axioma del neutro, GROUP_1:def 4) y concluye aplicando el teorema
+  ::@ Cancela de arriba.
+  ::@pista <code>then a*a = a*1_G by GROUP_1:def 4;</code>
+  ::@pista <code>hence thesis by Cancela;</code>
+  ::@sol
+  then a*a = a*1_G by GROUP_1:def 4;
+  hence thesis by Cancela;
+  ::@fin
+end;
+
+:: El inverso de un producto. GROUP_1:12 dice: si h*g = 1_G entonces
+:: h = g" y g = h".
+
+theorem InvProd:
+  (a*b)" = b"*a"
+proof
+  (a*b)*(b"*a") = a*(b*(b"*a")) by GROUP_1:def 3
+    .= a*((b*b")*a") by GROUP_1:def 3
+    .= a*(1_G*a") by GROUP_1:def 5
+    .= a*a" by GROUP_1:def 4
+    .= 1_G by GROUP_1:def 5;
+  hence thesis by GROUP_1:12;
+end;
+
+:: Un ejercicio clásico: si todo elemento es su propio inverso (a*a = 1),
+:: el grupo es conmutativo.
+
+theorem
+  (for a holds a*a = 1_G) implies for a,b holds a*b = b*a
+proof
+  assume
+A1: for a holds a*a = 1_G;
+A2: for a holds a = a"
+  proof
+    let a;
+    a*a = 1_G by A1;
+    hence thesis by GROUP_1:12;
+  end;
+  let a,b;
+  ::@ej 2 | Completa la cuenta con una igualdad iterada de tres pasos:
+  ::@     a*b = (a*b)"      por A2
+  ::@        .= b"*a"       por InvProd
+  ::@        .= b*a"        por A2
+  ::@ (El último paso, de b*a" a b*a, ya está escrito debajo.)
+  ::@pista Primer renglón, sin punto y coma: <code>a*b = (a*b)" by A2</code>
+  ::@pista <code>.= b"*a" by InvProd</code> y luego <code>.= b*a" by A2;</code>
+  ::@sol
+  a*b = (a*b)" by A2
+    .= b"*a" by InvProd
+    .= b*a" by A2;
+  ::@fin
+  hence a*b = b*a by A2;
+end;
+
+:: Por supuesto, estos hechos ya están en la MML.
+
+theorem
+  a*b = a*c implies b = c by GROUP_1:6;
+
+theorem
+  (a*b)" = b"*a" by GROUP_1:17;
+
+:: ------------------------------------------------------------------
+:: Una estructura propia: un conjunto con un punto distinguido.
+:: Entre paréntesis va la estructura "antepasada" de la que hereda
+:: campos (1-sorted sólo tiene el campo carrier).
+:: ------------------------------------------------------------------
+
+definition
+  struct (1-sorted) Punteado (# carrier -> set,
+                               base -> Element of the carrier #);
+end;
+
+:: Un objeto de la estructura se construye dando sus campos entre (# #),
+:: y los campos se leen con "the ... of".
+
+theorem
+  ex P being Punteado st the carrier of P = NAT & the base of P = 0
+proof
+  reconsider z = 0 as Element of NAT by ORDINAL1:def 12;
+  ::@ej 3 | Exhibe el testigo: un Punteado cuyo conjunto es NAT y cuyo
+  ::@ punto base es z. Escribe el paso take con el objeto
+  ::@ "Punteado(# NAT, z #)" y concluye con "thus thesis;".
+  ::@pista <code>take Punteado(# NAT, z #);</code>
+  ::@sol
+  take Punteado(# NAT, z #);
+  thus thesis;
+  ::@fin
+end;
+
+:: Como Punteado hereda de 1-sorted, todo lo que la MML dice de las
+:: estructuras 1-sorted vale para él: por ejemplo, "Element of P"
+:: significa "Element of the carrier of P".
+
+theorem
+  for P being Punteado holds the base of P is Element of P;

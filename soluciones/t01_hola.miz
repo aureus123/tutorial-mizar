@@ -1,0 +1,38 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 1: el primer artículo
+:: ====================================================================
+::  Un artículo tiene dos partes: el entorno (environ), que indica qué se
+::  importa de la biblioteca MML, y el texto, que empieza en "begin".
+::  Este artículo no importa nada: sólo usa lo que Mizar trae de fábrica
+::  (la igualdad, los tipos object y set, y la pertenencia "in").
+
+environ
+
+begin
+
+:: Un enunciado suelto. Mizar lo acepta sin ayuda:
+
+for x being object holds x = x;
+
+:: EJERCICIO 1: El enunciado siguiente es falso, y por eso Mizar lo rechaza
+::   con el error *4. Cambia UN símbolo para que diga: "si x = y entonces
+::   y = x".
+for x,y being object st x = y holds y = x;
+
+:: Un teorema con su demostración. La demostración va entre "proof" y
+:: "end;" y consta de pasos. Aquí hay tres: fijar x e y (let), suponer la
+:: hipótesis (assume) y concluir (thus).
+
+theorem Simetria:
+  for x,y being object st x = y holds y = x
+proof
+  let x,y be object;
+  assume
+A1: x = y;
+  :: EJERCICIO 2: Falta el último paso de la demostración. Escribe en un
+  ::   renglón:   thus y = x by A1;
+  thus y = x by A1;
+end;
+
+:: EJERCICIO 3: El renglón siguiente no es Mizar. Compila para ver qué
+::   opina el verificador y después bórralo.

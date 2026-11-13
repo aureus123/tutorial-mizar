@@ -1,0 +1,183 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 10: conjuntos
+:: ====================================================================
+::  Mizar está construido sobre la teoría de conjuntos (los axiomas están
+::  en el artículo TARSKI). Diccionario:
+::     {}  {x}  {x,y}     vacío, unitario, par
+::     X \/ Y   X /\ Y   X \ Y     unión, intersección, diferencia
+::     X c= Y             X es subconjunto de Y (la c es una letra)
+::     bool X             partes de X
+::  Para demostrar "X c= Y" se toma un x de X y se prueba que está en Y.
+::  Esos pasos (let, assume) no coinciden con la forma de la tesis, que
+::  es "X c= Y": Mizar los acepta porque la directiva "definitions
+::  TARSKI" le permite desplegar la definición de c= en la tesis.
+
+environ
+
+ vocabularies XBOOLE_0, TARSKI, ZFMISC_1;
+ notations TARSKI, XBOOLE_0, ZFMISC_1;
+ constructors TARSKI, XBOOLE_0, ZFMISC_1;
+ registrations XBOOLE_0;
+ requirements BOOLE;
+ definitions TARSKI, XBOOLE_0;
+ theorems TARSKI, XBOOLE_0, XBOOLE_1, ZFMISC_1;
+
+begin
+
+reserve x,y for object;
+reserve X,Y,Z for set;
+
+:: Qué significa pertenecer a cada conjunto. Son las definiciones de la
+:: MML, que se citan como teoremas con "ARTICULO:def N".
+
+theorem
+  x in X \/ Y iff x in X or x in Y by XBOOLE_0:def 3;
+
+theorem
+  x in X /\ Y iff x in X & x in Y by XBOOLE_0:def 4;
+
+theorem
+  x in X \ Y iff x in X & not x in Y by XBOOLE_0:def 5;
+
+theorem
+  x in {y} iff x = y by TARSKI:def 1;
+
+theorem
+  X in bool Y iff X c= Y by ZFMISC_1:def 1;
+
+:: La inclusión: TARSKI:def 3 dice que X c= Y significa
+::    for x being object holds x in X implies x in Y
+
+theorem
+  X c= Y & x in X implies x in Y by TARSKI:def 3;
+
+theorem
+  X /\ Y c= X
+proof
+  let x;
+  assume x in X /\ Y;
+  hence x in X by XBOOLE_0:def 4;
+end;
+
+theorem
+  X c= X \/ Y
+proof
+  ::@ej 1 | Escribe la demostración (tres pasos: let, assume y la
+  ::@ conclusión con hence, justificada por la definición de la unión).
+  ::@pista Empieza como el ejemplo anterior: <code>let x;</code> y <code>assume x in X;</code>
+  ::@pista <code>hence x in X \/ Y by XBOOLE_0:def 3;</code>
+  ::@sol
+  let x;
+  assume x in X;
+  hence x in X \/ Y by XBOOLE_0:def 3;
+  ::@fin
+end;
+
+theorem Transitiva:
+  X c= Y & Y c= Z implies X c= Z
+proof
+  assume that
+A1: X c= Y and
+A2: Y c= Z;
+  let x;
+  assume x in X;
+  ::@ej 2 | Completa en dos renglones: de "x in X" pasa a "x in Y"
+  ::@ (por A1 y la definición de c=) y de ahí a "x in Z".
+  ::@pista <code>then x in Y by A1,TARSKI:def 3;</code>
+  ::@pista <code>hence x in Z by A2,TARSKI:def 3;</code>
+  ::@sol
+  then x in Y by A1,TARSKI:def 3;
+  hence x in Z by A2,TARSKI:def 3;
+  ::@fin
+end;
+
+:: La igualdad de conjuntos se demuestra por doble inclusión. Con
+:: "definitions XBOOLE_0" la tesis X = Y se despliega en
+:: "X c= Y & Y c= X", y cada inclusión se despliega a su vez.
+
+theorem Distributiva:
+  X /\ (Y \/ Z) = (X /\ Y) \/ (X /\ Z)
+proof
+  thus X /\ (Y \/ Z) c= (X /\ Y) \/ (X /\ Z)
+  proof
+    let x;
+    assume x in X /\ (Y \/ Z);
+    then
+A1: x in X & x in Y \/ Z by XBOOLE_0:def 4;
+    then x in Y or x in Z by XBOOLE_0:def 3;
+    then x in X /\ Y or x in X /\ Z by A1,XBOOLE_0:def 4;
+    hence thesis by XBOOLE_0:def 3;
+  end;
+  let x;
+  assume x in (X /\ Y) \/ (X /\ Z);
+  ::@ej 3 | Completa la segunda inclusión deshaciendo el camino de la
+  ::@ primera, en tres pasos con then: (1) x in X /\ Y or x in X /\ Z;
+  ::@ (2) x in X & (x in Y or x in Z);  (3) x in X & x in Y \/ Z.
+  ::@ Cada uno se justifica con la definición que corresponda.
+  ::@pista <code>then x in X /\ Y or x in X /\ Z by XBOOLE_0:def 3;</code>
+  ::@pista <code>then x in X &amp; (x in Y or x in Z) by XBOOLE_0:def 4;</code>
+  ::@pista <code>then x in X &amp; x in Y \/ Z by XBOOLE_0:def 3;</code>
+  ::@sol
+  then x in X /\ Y or x in X /\ Z by XBOOLE_0:def 3;
+  then x in X & (x in Y or x in Z) by XBOOLE_0:def 4;
+  then x in X & x in Y \/ Z by XBOOLE_0:def 3;
+  ::@fin
+  hence thesis by XBOOLE_0:def 4;
+end;
+
+:: Una ley de De Morgan. Las dos inclusiones, con hereby para la primera.
+
+theorem DeMorgan:
+  X \ (Y \/ Z) = (X \ Y) /\ (X \ Z)
+proof
+  hereby
+    let x;
+    assume x in X \ (Y \/ Z);
+    then
+A1: x in X & not x in Y \/ Z by XBOOLE_0:def 5;
+    ::@ej 4 | Dos pasos con then: (1) "not x in Y & not x in Z";
+    ::@ (2) "x in X \ Y & x in X \ Z", que necesita además A1.
+    ::@pista <code>then not x in Y &amp; not x in Z by XBOOLE_0:def 3;</code>
+    ::@pista <code>then x in X \ Y &amp; x in X \ Z by A1,XBOOLE_0:def 5;</code>
+    ::@sol
+    then not x in Y & not x in Z by XBOOLE_0:def 3;
+    then x in X \ Y & x in X \ Z by A1,XBOOLE_0:def 5;
+    ::@fin
+    hence x in (X \ Y) /\ (X \ Z) by XBOOLE_0:def 4;
+  end;
+  let x;
+  assume x in (X \ Y) /\ (X \ Z);
+  then x in X \ Y & x in X \ Z by XBOOLE_0:def 4;
+  then x in X & not x in Y & not x in Z by XBOOLE_0:def 5;
+  then x in X & not x in Y \/ Z by XBOOLE_0:def 3;
+  hence thesis by XBOOLE_0:def 5;
+end;
+
+:: Casi todo lo elemental sobre conjuntos ya está demostrado en XBOOLE_1.
+:: Lo normal es buscarlo y citarlo.
+
+theorem
+  X c= Y implies X /\ Y = X
+proof
+  assume
+A1: X c= Y;
+  ::@ej 5 | Este hecho ya está en la MML. Encuéntralo con
+  ::@     ./mml.py -g 'X /\\ Y = X' XBOOLE_1
+  ::@ y concluye en un renglón:   thus thesis by A1,XBOOLE_1:(número);
+  ::@pista La búsqueda muestra el teorema <code>X c= Y implies X /\ Y = X</code> con su referencia en el comentario <code>:: XBOOLE_1:...</code>
+  ::@pista Es XBOOLE_1:28.
+  ::@sol
+  thus thesis by A1,XBOOLE_1:28;
+  ::@fin
+end;
+
+:: Con "requirements BOOLE" el verificador conoce el conjunto vacío.
+
+theorem
+  X \/ {} = X & X /\ {} = {} & X \ {} = X;
+
+theorem
+  not x in {} by XBOOLE_0:def 1;
+
+theorem
+  X \ X = {} by XBOOLE_1:37;

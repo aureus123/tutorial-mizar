@@ -1,0 +1,59 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 18 (b): un artículo para la biblioteca
+::  local
+:: ====================================================================
+::  Este artículo está completo: define la media de dos reales y prueba
+::  dos teoremas. Para poder usarlo desde otro artículo hay que
+::  "exportarlo" a la biblioteca local (la carpeta prel, al lado de text
+::  y dict). Desde una terminal situada en la carpeta tutorial-mizar:
+::
+::        miz2prel text/t18_bib
+::
+::  Desde fuera, los teoremas se citan por número de orden (T18_BIB:1,
+::  T18_BIB:2, ...) y las definiciones como T18_BIB:def 1, ...; las
+::  etiquetas (Th1, ...) sólo valen dentro del artículo. Sólo se exporta
+::  lo que lleva la palabra "theorem": los lemas auxiliares (enunciados
+::  con etiqueta pero sin "theorem", como Lm1) quedan privados.
+::  Vocabulario dict/t18_bib.voc: Omedia.
+
+environ
+
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   T18_BIB;
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0;
+ registrations ORDINAL1, XREAL_0;
+ requirements REAL, NUMERALS, SUBSET, ARITHM;
+ theorems XREAL_1;
+
+begin
+
+reserve a,b for Real;
+
+definition
+  let a,b be Real;
+  func media(a,b) -> Real equals
+  (a + b)/2;
+  coherence;
+  commutativity;
+end;
+
+:: Un lema privado: no lleva "theorem" y no se exporta.
+
+Lm1: a <= b implies a + a <= a + b & a + b <= b + b by XREAL_1:6;
+
+:: Este será T18_BIB:1
+
+theorem Th1:
+  a <= b implies a <= media(a,b) & media(a,b) <= b
+proof
+  assume a <= b;
+  then a + a <= a + b & a + b <= b + b by Lm1;
+  then (a + a)/2 <= (a + b)/2 & (a + b)/2 <= (b + b)/2 by XREAL_1:72;
+  hence thesis;
+end;
+
+:: Este será T18_BIB:2
+
+theorem
+  media(a,a) = a;

@@ -1,0 +1,132 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 5: consider, per cases y el absurdo
+:: ====================================================================
+::  Para USAR lo que ya se sabe:
+::     se sabe  ex x st A        consider x such that A;
+::     se sabe  A or B           per cases; suppose A; ... end;
+::                                          suppose B; ... end;
+::  Reducción al absurdo: para demostrar A se supone "not A" y se llega
+::  a "contradiction".
+
+environ
+
+begin
+
+reserve x,y,z for object;
+reserve X,Y,Z for set;
+
+:: Ejemplo: consider da nombre a un objeto cuya existencia se conoce.
+
+theorem
+  (ex x st x in X) & (for x st x in X holds x in Y) implies ex x st x in Y
+proof
+  assume that
+A1: ex x st x in X and
+A2: for x st x in X holds x in Y;
+  consider a being object such that
+A3: a in X by A1;
+  take a;
+  thus a in Y by A2,A3;
+end;
+
+:: Ejemplo: demostración por casos.
+
+theorem
+  (x in X or x in Y) & (for x st x in X holds x in Z) &
+    (for x st x in Y holds x in Z) implies x in Z
+proof
+  assume that
+A1: x in X or x in Y and
+A2: for x st x in X holds x in Z and
+A3: for x st x in Y holds x in Z;
+  per cases by A1;
+  suppose x in X;
+    hence x in Z by A2;
+  end;
+  suppose x in Y;
+    hence x in Z by A3;
+  end;
+end;
+
+theorem
+  (ex x st x in X or x in Y) implies (ex x st x in X) or (ex x st x in Y)
+proof
+  assume ex x st x in X or x in Y;
+  :: EJERCICIO 1: Da nombre al objeto que existe por la hipótesis: escribe
+  ::   un paso "consider" que introduzca un objeto a con la propiedad A1:
+  ::   "a in X or a in Y". Como la hipótesis es el paso anterior, el
+  ::   consider debe empezar con "then".
+  then consider a being object such that
+A1: a in X or a in Y;
+  per cases by A1;
+  suppose a in X;
+    hence thesis;
+  end;
+  :: EJERCICIO 2: Falta el segundo caso. Escríbelo (un bloque suppose ...
+  ::   end; de tres renglones, igual al primero pero para Y).
+  suppose a in Y;
+    hence thesis;
+  end;
+end;
+
+:: Ejemplo: la paradoja de Russell. No existe el conjunto R de todos los
+:: conjuntos que no se pertenecen a sí mismos. Demostración por absurdo.
+
+theorem Russell:
+  not ex R being set st for x being set holds x in R iff not x in x
+proof
+  assume ex R being set st for x being set holds x in R iff not x in x;
+  then consider R being set such that
+A1: for x being set holds x in R iff not x in x;
+  R in R iff not R in R by A1;
+  hence contradiction;
+end;
+
+:: Otro absurdo: se supone que existe lo que no puede existir, se le da
+:: nombre con consider y se llega a una contradicción.
+
+theorem
+  (for x st x in X holds x in Y) & (not ex x st x in Y)
+    implies not ex x st x in X
+proof
+  assume that
+A1: for x st x in X holds x in Y and
+A2: not ex x st x in Y;
+  assume ex x st x in X;
+  :: EJERCICIO 3: Llega a la contradicción en tres pasos: un consider (con
+  ::   then) que dé nombre a un elemento a de X, un paso intermedio que
+  ::   diga que a está en Y, y la conclusión "hence contradiction by A2;".
+  then consider a being object such that
+A3: a in X;
+  a in Y by A1,A3;
+  hence contradiction by A2;
+end;
+
+:: El principio del bebedor: en todo bar (no vacío) hay alguien tal que,
+:: si él bebe, entonces todos beben. X es el conjunto de los que beben.
+
+theorem Bebedor:
+  ex x st x in X implies for y holds y in X
+proof
+  per cases;
+  suppose ex x st not x in X;
+    then consider a being object such that
+A1:   not a in X;
+    :: EJERCICIO 4: Primer caso: hay alguien, a, que no bebe. Tómalo como
+    ::   testigo; después supón "a in X" y concluye la tesis (que se
+    ::   deduce de la contradicción con A1). Son tres renglones.
+    take a;
+    assume a in X;
+    hence thesis by A1;
+  end;
+  suppose
+A2:   not ex x st not x in X;
+    :: Como testigo sirve cualquier objeto. El único que hay a mano es
+    :: el propio X (un conjunto también es un objeto).
+    take X;
+    assume X in X;
+    :: EJERCICIO 5: Segundo caso: no hay nadie que no beba, es decir, todos
+    ::   beben. Concluye con un solo renglón "thus ... by A2;".
+    thus for y holds y in X by A2;
+  end;
+end;

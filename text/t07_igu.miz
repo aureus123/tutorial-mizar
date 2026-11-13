@@ -1,0 +1,119 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 7: igualdades
+:: ====================================================================
+::  Con "requirements ARITHM" el verificador normaliza polinomios y
+::  resuelve sistemas lineales por su cuenta. Lo que NO sabe hacer solo
+::  (dividir, sacar raíces) se justifica con teoremas de XCMPLX_1 y
+::  SQUARE_1. Las cuentas largas se escriben como igualdades iteradas:
+::       t1 = t2 by ...
+::         .= t3 by ...
+::         .= t4;
+
+environ
+
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   SQUARE_1;
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, SQUARE_1;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, SQUARE_1;
+ registrations ORDINAL1, XREAL_0, SQUARE_1;
+ requirements REAL, NUMERALS, SUBSET, ARITHM;
+ equalities SQUARE_1;
+ theorems XCMPLX_1, XREAL_1, SQUARE_1;
+
+begin
+
+reserve a,b,c,x,y for Real;
+
+:: Identidades polinómicas: no necesitan justificación.
+
+theorem
+  (a + b)*(a - b) = a^2 - b^2;
+
+theorem
+  (a + b + c)^2 = a^2 + b^2 + c^2 + 2*a*b + 2*a*c + 2*b*c;
+
+:: EJERCICIO 1: El cubo de un binomio está mal copiado (por eso el *4).
+::   Corrige los coeficientes del lado derecho.
+theorem
+  (a + b)*(a + b)*(a + b) = a*a*a + 2*a^2*b + 2*a*b^2 + b*b*b;
+
+:: Las hipótesis que son igualdades también se usan solas: sustitución y
+:: sistemas de ecuaciones lineales.
+
+theorem
+  x = y + 1 implies x^2 - y^2 = 2*y + 1;
+
+theorem
+  a + b = 5 & a - b = 1 implies a = 3 & b = 2;
+
+:: La división no es automática: hay que decir por qué el divisor no es
+:: cero y qué teorema se usa.
+
+theorem
+  a <> 0 implies a/a = 1 by XCMPLX_1:60;
+
+theorem
+  b <> 0 implies a/b*b = a by XCMPLX_1:87;
+
+:: Igualdad iterada: cada ".=" continúa la cuenta desde el término
+:: anterior, con su propia justificación.
+
+theorem
+  a <> 0 implies (a^2 - a)/a + 1 = a
+proof
+  assume
+A1: a <> 0;
+  (a^2 - a)/a + 1 = (a - 1)*a/a + 1
+    .= (a - 1) + 1 by A1,XCMPLX_1:89
+    .= a;
+  hence thesis;
+end;
+
+theorem
+  x <> 0 implies (x^2 + x)/x = x + 1
+proof
+  assume
+A1: x <> 0;
+  :: EJERCICIO 2: Completa la igualdad iterada: falta el renglón ".=" final,
+  ::   que cancela la x usando el teorema XCMPLX_1:89 y la hipótesis A1.
+  (x^2 + x)/x = (x + 1)*x/x;
+  hence thesis;
+end;
+
+theorem
+  a <> 0 & b <> 0 implies 1/a + 1/b = (a + b)/(a*b)
+proof
+  assume
+A1: a <> 0 & b <> 0;
+  :: EJERCICIO 3: Falta el número del teorema de XCMPLX_1 que suma dos
+  ::   fracciones (aquí dice 1, que es otro teorema). Búscalo con
+  ::   ./mml.py -g 'a / b \+ c / d' XCMPLX_1
+  ::   y corrige la referencia.
+  1/a + 1/b = (1*b + 1*a)/(a*b) by A1,XCMPLX_1:1;
+  hence thesis;
+end;
+
+:: Raíces cuadradas: sqrt a es el único real >= 0 cuyo cuadrado es a
+:: (SQUARE_1:def 2), siempre que 0 <= a.
+
+theorem
+  0 <= a & 0 <= b implies sqrt(a^2*b^2) = a*b
+proof
+  assume 0 <= a & 0 <= b;
+  then
+A1: 0 <= a*b by XREAL_1:127;
+  thus sqrt(a^2*b^2) = sqrt((a*b)^2)
+    .= a*b by A1,SQUARE_1:22;
+end;
+
+:: Racionalización de un denominador.
+
+theorem
+  1/(sqrt 2 - 1) = sqrt 2 + 1
+proof
+A1: (sqrt 2)^2 = 2 by SQUARE_1:def 2;
+  :: EJERCICIO 4: Calcula el producto notable con una igualdad iterada de dos
+  ::   pasos:   (sqrt 2 + 1)*(sqrt 2 - 1) = (sqrt 2)^2 - 1   y luego
+  ::   ".= 1" justificado con A1.
+  hence thesis by XCMPLX_1:73;
+end;

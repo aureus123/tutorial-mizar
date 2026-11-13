@@ -1,0 +1,277 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 14: límites y continuidad
+:: ====================================================================
+::  Las definiciones épsilon-delta de un primer curso de análisis, y
+::  demostraciones con la estructura típica:
+::       let eps;  assume 0 < eps;      (dado épsilon...)
+::       take delta = ...;              (...elijo delta)
+::       thus 0 < delta;                (es positivo)
+::       let x;  assume |.x - c.| < delta;   (y funciona)
+::       ...
+::  No se usan los límites de la MML: sólo |.|, min y la aritmética real.
+::  Vocabulario dict/t14_lim.voc: Res_continua_en, Res_limite_de.
+
+environ
+
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, FUNCT_1, COMPLEX1,
+   XXREAL_0, CARD_1, REAL_1, PARTFUN1, SUBSET_1, VALUED_1, FUNCT_2, T14_LIM;
+ notations TARSKI, XBOOLE_0, SUBSET_1, ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0,
+   XXREAL_0, COMPLEX1, RELAT_1, FUNCT_1, RELSET_1, PARTFUN1, FUNCT_2,
+   VALUED_0, VALUED_1;
+ constructors REAL_1, COMPLEX1, VALUED_1, PARTFUN1, FUNCT_2, RELSET_1;
+ registrations XBOOLE_0, XREAL_0, MEMBERED, NUMBERS, RELSET_1, VALUED_0,
+   VALUED_1, FUNCT_2, XXREAL_0;
+ requirements REAL, NUMERALS, SUBSET, BOOLE, ARITHM;
+ theorems XXREAL_0, XREAL_0, XREAL_1, COMPLEX1, VALUED_1, FUNCT_2;
+
+begin
+
+reserve f,g for Function of REAL,REAL;
+reserve c,k,x,y,L for Real;
+
+:: f es continua en c: para todo eps > 0 existe delta > 0 tal que
+:: |x - c| < delta implica |f(x) - f(c)| < eps.
+
+definition
+  let f,c;
+  pred f es_continua_en c means
+:DefCont:
+  for eps being Real st 0 < eps ex delta being Real st 0 < delta &
+    for x being Real st |.x - c.| < delta holds |.f.x - f.c.| < eps;
+end;
+
+:: Las funciones constantes son continuas: cualquier delta sirve.
+
+theorem
+  (for x holds f.x = k) implies f es_continua_en c
+proof
+  assume
+A1: for x holds f.x = k;
+  let eps be Real;
+  assume
+A2: 0 < eps;
+  take 1;
+  thus 0 < 1;
+  let x;
+  assume |.x - c.| < 1;
+  f.x = k & f.c = k by A1;
+  then |.f.x - f.c.| = 0 by COMPLEX1:44;
+  hence |.f.x - f.c.| < eps by A2;
+end;
+
+:: La identidad es continua: delta = eps.
+
+theorem
+  (for x holds f.x = x) implies f es_continua_en c
+proof
+  assume
+A1: for x holds f.x = x;
+  let eps be Real;
+  assume
+A2: 0 < eps;
+  :: EJERCICIO 1: Elige delta: escribe el paso take y, a continuación, el
+  ::   paso "thus" que demuestra que el delta elegido es positivo.
+  let x;
+  assume
+A3: |.x - c.| < eps;
+  f.x = x & f.c = c by A1;
+  hence |.f.x - f.c.| < eps by A3;
+end;
+
+:: Una función lineal: f(x) = 2x + 1, con delta = eps/2.
+
+theorem
+  (for x holds f.x = 2*x + 1) implies f es_continua_en c
+proof
+  assume
+A1: for x holds f.x = 2*x + 1;
+  let eps be Real;
+  assume
+A2: 0 < eps;
+  take delta = eps/2;
+  thus 0 < delta by A2,XREAL_1:215;
+  let x;
+  assume
+A3: |.x - c.| < delta;
+  f.x = 2*x + 1 & f.c = 2*c + 1 by A1;
+  then |.f.x - f.c.| = |.2*(x - c).|
+    .= |.2.|*|.x - c.| by COMPLEX1:65
+    .= 2*|.x - c.| by COMPLEX1:43;
+  then |.f.x - f.c.| < 2*delta by A3,XREAL_1:68;
+  hence |.f.x - f.c.| < eps;
+end;
+
+:: Ahora f(x) = 3x - 2.
+
+theorem
+  (for x holds f.x = 3*x - 2) implies f es_continua_en c
+proof
+  assume
+A1: for x holds f.x = 3*x - 2;
+  let eps be Real;
+  assume
+A2: 0 < eps;
+  :: EJERCICIO 2: Elige el delta adecuado para esta función con un paso de la
+  ::   forma "take delta = ...;" (después se usa el nombre delta).
+  thus 0 < delta by A2,XREAL_1:139;
+  let x;
+  assume
+A3: |.x - c.| < delta;
+  f.x = 3*x - 2 & f.c = 3*c - 2 by A1;
+  :: EJERCICIO 3: Calcula |.f.x - f.c.| con una igualdad iterada de tres
+  ::   términos, como en el ejemplo anterior:  |.3*(x - c).|, luego
+  ::   |.3.|*|.x - c.| (COMPLEX1:65) y luego 3*|.x - c.| (COMPLEX1:43).
+  ::   El primer renglón empieza con then.
+  then |.f.x - f.c.| < 3*delta by A3,XREAL_1:68;
+  hence |.f.x - f.c.| < eps;
+end;
+
+:: La composición de funciones continuas es continua. Aquí no hay
+:: cuentas: sólo se encadenan los dos "para todo eps existe delta".
+
+theorem Comp:
+  (g*f).x = g.(f.x)
+proof
+  x in REAL by XREAL_0:def 1;
+  hence thesis by FUNCT_2:15;
+end;
+
+theorem
+  f es_continua_en c & g es_continua_en f.c implies g*f es_continua_en c
+proof
+  assume that
+A1: f es_continua_en c and
+A2: g es_continua_en f.c;
+  let eps be Real;
+  assume 0 < eps;
+  then consider d1 being Real such that
+A3: 0 < d1 and
+A4: for y being Real st |.y - f.c.| < d1 holds |.g.y - g.(f.c).| < eps
+    by A2,DefCont;
+  :: EJERCICIO 4: La continuidad de g dio un d1 para eps. Usa ahora la
+  ::   continuidad de f (A1) tomando d1 en el papel de épsilon: escribe
+  ::   un consider que introduzca d2 con las propiedades
+  ::   A5: 0 < d2
+  ::   A6: for x being Real st |.x - c.| < d2 holds |.f.x - f.c.| < d1
+  ::   justificado por A1, A3 y DefCont.
+  take d2;
+  thus 0 < d2 by A5;
+  let x;
+  assume |.x - c.| < d2;
+  then |.f.x - f.c.| < d1 by A6;
+  then |.g.(f.x) - g.(f.c).| < eps by A4;
+  then |.(g*f).x - g.(f.c).| < eps by Comp;
+  hence |.(g*f).x - (g*f).c.| < eps by Comp;
+end;
+
+:: La suma de funciones continuas es continua: el truco de eps/2 y el
+:: mínimo de los dos deltas.
+
+theorem Suma:
+  (f + g).x = f.x + g.x
+proof
+  reconsider x1 = x as Element of REAL by XREAL_0:def 1;
+  (f + g).x1 = f.x1 + g.x1 by VALUED_1:1;
+  hence thesis;
+end;
+
+theorem
+  f es_continua_en c & g es_continua_en c implies f + g es_continua_en c
+proof
+  assume that
+A1: f es_continua_en c and
+A2: g es_continua_en c;
+  let eps be Real;
+  assume 0 < eps;
+  then
+A3: 0 < eps/2 by XREAL_1:215;
+  consider d1 being Real such that
+A4: 0 < d1 and
+A5: for x being Real st |.x - c.| < d1 holds |.f.x - f.c.| < eps/2
+    by A1,A3,DefCont;
+  consider d2 being Real such that
+A6: 0 < d2 and
+A7: for x being Real st |.x - c.| < d2 holds |.g.x - g.c.| < eps/2
+    by A2,A3,DefCont;
+  take delta = min(d1,d2);
+  thus 0 < delta by A4,A6,XXREAL_0:21;
+  let x;
+  assume
+A8: |.x - c.| < delta;
+  delta <= d1 & delta <= d2 by XXREAL_0:17;
+  then |.x - c.| < d1 & |.x - c.| < d2 by A8,XXREAL_0:2;
+  then
+A9: |.f.x - f.c.| < eps/2 & |.g.x - g.c.| < eps/2 by A5,A7;
+  :: EJERCICIO 5: Termina la cuenta en tres pasos:
+  ::   (1) A10: la desigualdad triangular (COMPLEX1:56) aplicada a
+  ::   (f.x - f.c) y (g.x - g.c);
+  ::   (2) |.f.x - f.c.| + |.g.x - g.c.| < eps/2 + eps/2, sumando las dos
+  ::   desigualdades de A9 (XREAL_1:8);
+  ::   (3) con then, por A10 y la transitividad XXREAL_0:2:
+  ::   |.(f.x - f.c) + (g.x - g.c).| < eps/2 + eps/2.
+  then |.(f.x + g.x) - (f.c + g.c).| < eps;
+  then |.(f + g).x - (f.c + g.c).| < eps by Suma;
+  hence |.(f + g).x - (f + g).c.| < eps by Suma;
+end;
+
+:: El límite de una función en un punto. La única diferencia con la
+:: continuidad es que no se mira qué pasa en x = c (0 < |x - c|) y que
+:: el valor límite L no tiene por qué ser f(c).
+
+definition
+  let f,c,L;
+  pred L es_limite_de f,c means
+:DefLim:
+  for eps being Real st 0 < eps ex delta being Real st 0 < delta &
+    for x being Real st 0 < |.x - c.| & |.x - c.| < delta holds
+      |.f.x - L.| < eps;
+end;
+
+:: f es continua en c si y sólo si su límite en c es f(c).
+
+theorem
+  f es_continua_en c iff f.c es_limite_de f,c
+proof
+  hereby
+    assume
+A1: f es_continua_en c;
+    thus f.c es_limite_de f,c
+    proof
+      let eps be Real;
+      assume 0 < eps;
+      then consider delta being Real such that
+A2:   0 < delta and
+A3:   for x being Real st |.x - c.| < delta holds |.f.x - f.c.| < eps
+        by A1,DefCont;
+      take delta;
+      thus 0 < delta by A2;
+      let x;
+      assume 0 < |.x - c.| & |.x - c.| < delta;
+      hence |.f.x - f.c.| < eps by A3;
+    end;
+  end;
+  assume
+A4: f.c es_limite_de f,c;
+  let eps be Real;
+  assume
+A5: 0 < eps;
+  then consider delta being Real such that
+A6: 0 < delta and
+A7: for x being Real st 0 < |.x - c.| & |.x - c.| < delta holds
+      |.f.x - f.c.| < eps by A4,DefLim;
+  take delta;
+  thus 0 < delta by A6;
+  let x;
+  assume
+A8: |.x - c.| < delta;
+  per cases;
+  suppose x <> c;
+    then x - c <> 0;
+    then 0 < |.x - c.| by COMPLEX1:47;
+    hence |.f.x - f.c.| < eps by A7,A8;
+  end;
+  suppose x = c;
+    then |.f.x - f.c.| = 0 by COMPLEX1:44;
+    hence |.f.x - f.c.| < eps by A5;
+  end;
+end;

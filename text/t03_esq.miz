@@ -1,0 +1,95 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 3: el esqueleto de una demostración
+:: ====================================================================
+::  Cada forma de la tesis tiene su paso de esqueleto:
+::     tesis                     paso             nueva tesis
+::     A implies B               assume A;        B
+::     A & B                     thus A;          B
+::     for x being T holds A     let x be T;      A
+::     ex x being T st A         take t;          A con t en lugar de x
+::  Los pasos se etiquetan (A1:, A2:, ...) para poder citarlos con "by".
+
+environ
+
+begin
+
+reserve x,y,z,s for object;
+reserve X,Y,Z,Hombres,Mortales for set;
+
+:: Ejemplo. Todos los hombres son mortales y Sócrates es hombre; luego
+:: Sócrates es mortal.
+
+theorem Socrates:
+  (for x st x in Hombres holds x in Mortales) & s in Hombres
+    implies s in Mortales
+proof
+  assume
+A1: for x st x in Hombres holds x in Mortales;
+  assume
+A2: s in Hombres;
+  thus s in Mortales by A1,A2;
+end;
+
+:: Las dos hipótesis también se pueden suponer de una vez con
+:: "assume that ... and ...;" (cada una con su etiqueta).
+
+theorem
+  (for x st x in Hombres holds x in Mortales) & s in Hombres
+    implies s in Mortales
+proof
+  assume that
+A1: for x st x in Hombres holds x in Mortales and
+A2: s in Hombres;
+  thus s in Mortales by A1,A2;
+end;
+
+:: Para demostrar una conjunción se demuestra cada parte con su "thus",
+:: en el mismo orden en que aparecen en la tesis.
+
+theorem Conmuta:
+  x in X & x in Y implies x in Y & x in X
+proof
+  assume
+A1: x in X & x in Y;
+  :: EJERCICIO 1: La tesis ahora es "x in Y & x in X". Escribe los dos pasos
+  ::   "thus" que la demuestran, cada uno justificado con "by A1".
+end;
+
+:: Para demostrar un "para todo" se fija un elemento arbitrario con let.
+
+theorem Transitiva:
+  (for x holds x in X implies x in Y) & (for x holds x in Y implies x in Z)
+    implies for x holds x in X implies x in Z
+proof
+  assume that
+A1: for x holds x in X implies x in Y and
+A2: for x holds x in Y implies x in Z;
+  :: EJERCICIO 2: La tesis ahora es "for x holds x in X implies x in Z".
+  ::   Escribe los dos pasos de esqueleto que faltan: fijar x, y suponer
+  ::   (con la etiqueta A3) que x in X.
+A4: x in Y by A1,A3;
+  thus x in Z by A2,A4;
+end;
+
+:: Para demostrar un "existe" se exhibe un testigo con take.
+
+theorem Testigo:
+  for x st x in X & x in Y ex z st z in X & z in Y
+proof
+  let x;
+  assume
+A1: x in X & x in Y;
+  :: EJERCICIO 3: La tesis ahora es "ex z st z in X & z in Y". Indica el
+  ::   testigo con un paso "take".
+  thus x in X by A1;
+  thus x in Y by A1;
+end;
+
+:: Ahora sin ayuda.
+
+theorem Contrarreciproca:
+  for x holds (x in X implies x in Y) implies (not x in Y implies not x in X)
+proof
+  :: EJERCICIO 4: Escribe la demostración completa (cuatro pasos: un let,
+  ::   dos assume con etiquetas A1 y A2, y un thus justificado con ambas).
+end;

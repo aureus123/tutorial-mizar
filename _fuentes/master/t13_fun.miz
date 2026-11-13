@@ -1,0 +1,211 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 13: funciones
+:: ====================================================================
+::  En Mizar hay dos cosas distintas que en matemática se llaman igual:
+::   - los FUNCTORES son símbolos del lenguaje (+, sqrt, media, ...);
+::   - las FUNCIONES son objetos de la teoría de conjuntos (conjuntos de
+::     pares). Tienen tipo "Function of X,Y", se aplican con un punto
+::     (f.x) y se componen con * (g*f es "g después de f").
+::  Vocabulario dict/t13_fun.voc: Vcreciente, Vdecreciente,
+::  Vestr_creciente.
+
+environ
+
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, FUNCT_1, XXREAL_0, CARD_1,
+   REAL_1, PARTFUN1, SUBSET_1, VALUED_1, FUNCT_2, TARSKI, T13_FUN;
+ notations TARSKI, XBOOLE_0, SUBSET_1, ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0,
+   XXREAL_0, RELAT_1, FUNCT_1, RELSET_1, PARTFUN1, FUNCT_2, VALUED_0,
+   VALUED_1;
+ constructors REAL_1, VALUED_1, PARTFUN1, FUNCT_2, RELSET_1;
+ registrations XBOOLE_0, XREAL_0, MEMBERED, NUMBERS, RELSET_1, VALUED_0,
+   VALUED_1, FUNCT_2, XXREAL_0;
+ requirements REAL, NUMERALS, SUBSET, BOOLE, ARITHM;
+ theorems XXREAL_0, XREAL_0, XREAL_1, VALUED_1, FUNCT_1, FUNCT_2, RELAT_1;
+
+begin
+
+reserve f,g,h for Function of REAL,REAL;
+reserve x,y for Real;
+
+:: El dominio de una función de REAL en REAL es REAL, y sus valores son
+:: números reales (esto último lo sabe Mizar por los registros).
+
+theorem
+  dom f = REAL by FUNCT_2:def 1;
+
+theorem
+  f.x is Real;
+
+:: El valor de la composición: (g*f).x = g.(f.x). El teorema de la MML
+:: (FUNCT_2:15) pide "x in REAL", que no es lo mismo que "x is Real":
+:: lo primero es una fórmula; lo segundo, un tipo. XREAL_0:def 1 conecta
+:: las dos cosas.
+
+theorem Comp:
+  (g*f).x = g.(f.x)
+proof
+  x in REAL by XREAL_0:def 1;
+  hence thesis by FUNCT_2:15;
+end;
+
+theorem
+  h*(g*f) = (h*g)*f by RELAT_1:36;
+
+:: Funciones monótonas.
+
+definition
+  let f;
+  attr f is creciente means
+:DefCrec:
+  for x,y st x <= y holds f.x <= f.y;
+  attr f is decreciente means
+:DefDecr:
+  for x,y st x <= y holds f.y <= f.x;
+  attr f is estr_creciente means
+:DefEC:
+  for x,y st x < y holds f.x < f.y;
+end;
+
+:: La composición de dos funciones crecientes es creciente.
+
+theorem
+  f is creciente & g is creciente implies g*f is creciente
+proof
+  assume that
+A1: f is creciente and
+A2: g is creciente;
+  let x,y;
+  assume x <= y;
+  then f.x <= f.y by A1,DefCrec;
+  then g.(f.x) <= g.(f.y) by A2,DefCrec;
+  then (g*f).x <= g.(f.y) by Comp;
+  hence (g*f).x <= (g*f).y by Comp;
+end;
+
+:: La composición de dos funciones decrecientes es... creciente.
+
+theorem
+  f is decreciente & g is decreciente implies g*f is creciente
+proof
+  assume that
+A1: f is decreciente and
+A2: g is decreciente;
+  let x,y;
+  assume x <= y;
+  ::@ej 1 | Completa los dos pasos centrales (con then). Primero usa
+  ::@ que f es decreciente para comparar f.y con f.x; después aplica que
+  ::@ g es decreciente a esa desigualdad (¡cuidado con el orden!).
+  ::@pista <code>then f.y &lt;= f.x by A1,DefDecr;</code>
+  ::@pista g invierte la desigualdad otra vez: <code>then g.(f.x) &lt;= g.(f.y) by A2,DefDecr;</code>
+  ::@sol
+  then f.y <= f.x by A1,DefDecr;
+  then g.(f.x) <= g.(f.y) by A2,DefDecr;
+  ::@fin
+  then (g*f).x <= g.(f.y) by Comp;
+  hence (g*f).x <= (g*f).y by Comp;
+end;
+
+theorem
+  f is creciente & g is decreciente implies g*f is decreciente
+proof
+  assume that
+A1: f is creciente and
+A2: g is decreciente;
+  ::@ej 2 | Escribe el resto de la demostración (seis renglones)
+  ::@ imitando las dos anteriores. Atención: ahora la tesis, desplegada,
+  ::@ es "for x,y st x <= y holds (g*f).y <= (g*f).x".
+  ::@pista Empieza con <code>let x,y;</code> y <code>assume x &lt;= y;</code>. Luego <code>then f.x &lt;= f.y by A1,DefCrec;</code>
+  ::@pista <code>then g.(f.y) &lt;= g.(f.x) by A2,DefDecr;</code>, después <code>then (g*f).y &lt;= g.(f.x) by Comp;</code> y por último <code>hence (g*f).y &lt;= (g*f).x by Comp;</code>
+  ::@sol
+  let x,y;
+  assume x <= y;
+  then f.x <= f.y by A1,DefCrec;
+  then g.(f.y) <= g.(f.x) by A2,DefDecr;
+  then (g*f).y <= g.(f.x) by Comp;
+  hence (g*f).y <= (g*f).x by Comp;
+  ::@fin
+end;
+
+:: La suma de funciones se define punto a punto (VALUED_1:1). Ese
+:: teorema pide que el argumento sea "Element of REAL": se consigue con
+:: un reconsider.
+
+theorem Suma:
+  (f + g).x = f.x + g.x
+proof
+  reconsider x1 = x as Element of REAL by XREAL_0:def 1;
+  (f + g).x1 = f.x1 + g.x1 by VALUED_1:1;
+  hence thesis;
+end;
+
+theorem
+  f is creciente & g is creciente implies f + g is creciente
+proof
+  assume that
+A1: f is creciente and
+A2: g is creciente;
+  let x,y;
+  assume x <= y;
+  then f.x <= f.y & g.x <= g.y by A1,A2,DefCrec;
+  ::@ej 3 | Suma las dos desigualdades (busca el teorema en XREAL_1:
+  ::@ "a <= b & c <= d implies a+c <= b+d") y después reescribe cada
+  ::@ miembro con el teorema Suma, como se hizo antes con Comp.
+  ::@pista <code>then f.x + g.x &lt;= f.y + g.y by XREAL_1:7;</code>
+  ::@pista <code>then (f + g).x &lt;= f.y + g.y by Suma;</code> y finalmente <code>hence (f + g).x &lt;= (f + g).y by Suma;</code>
+  ::@sol
+  then f.x + g.x <= f.y + g.y by XREAL_1:7;
+  then (f + g).x <= f.y + g.y by Suma;
+  hence (f + g).x <= (f + g).y by Suma;
+  ::@fin
+end;
+
+:: Inyectividad. En la MML "inyectiva" se dice one-to-one, y FUNCT_2:19
+:: la caracteriza para funciones de X en Y.
+
+theorem Inyectiva:
+  f is estr_creciente implies f is one-to-one
+proof
+  assume
+A1: f is estr_creciente;
+  for x1,x2 being object st x1 in REAL & x2 in REAL & f.x1 = f.x2
+    holds x1 = x2
+  proof
+    let x1,x2 be object;
+    assume that
+A2: x1 in REAL & x2 in REAL and
+A3: f.x1 = f.x2;
+    reconsider a = x1, b = x2 as Real by A2;
+    assume x1 <> x2;
+    ::@ej 4 | Por absurdo: a y b son distintos. Deduce "a < b or b < a"
+    ::@ (por XXREAL_0:1), y de ahí "f.a < f.b or f.b < f.a" (por A1 y
+    ::@ DefEC). Son dos pasos con then.
+    ::@pista XXREAL_0:1 dice <code>a &lt;= b &amp; b &lt;= a implies a = b</code>; como a &lt; b es «not b &lt;= a», su contrarrecíproca da justo lo que se necesita: <code>then a &lt; b or b &lt; a by XXREAL_0:1;</code>
+    ::@pista <code>then f.a &lt; f.b or f.b &lt; f.a by A1,DefEC;</code>
+    ::@sol
+    then a < b or b < a by XXREAL_0:1;
+    then f.a < f.b or f.b < f.a by A1,DefEC;
+    ::@fin
+    hence contradiction by A3;
+  end;
+  hence thesis by FUNCT_2:19;
+end;
+
+:: La composición de funciones inyectivas es inyectiva: ya está en la
+:: MML (para funciones cualesquiera).
+
+theorem
+  f is estr_creciente & g is estr_creciente implies g*f is one-to-one
+proof
+  assume f is estr_creciente & g is estr_creciente;
+  then
+A1: f is one-to-one & g is one-to-one by Inyectiva;
+  ::@ej 5 | Busca en FUNCT_1 el teorema sobre la composición de
+  ::@ funciones one-to-one, por ejemplo con
+  ::@     ./mml.py -g 'g\*f is one-to-one' FUNCT_1
+  ::@ y concluye:   thus thesis by A1,FUNCT_1:(número);
+  ::@pista De los resultados, el que sirve es <code>f is one-to-one &amp; g is one-to-one implies g*f is one-to-one</code>.
+  ::@pista Es FUNCT_1:24.
+  ::@sol
+  thus thesis by A1,FUNCT_1:24;
+  ::@fin
+end;

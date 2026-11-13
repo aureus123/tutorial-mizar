@@ -1,0 +1,93 @@
+<section class="vista" id="v-inicio" data-titulo="Preparación">
+<p class="sobre">Tutorial interactivo · Mizar 8.1.15 · MML 5.94</p>
+<h1>Mizar paso a paso</h1>
+<p class="entrada">Diecinueve lecciones para aprender a formalizar matemática de grado en Mizar: lógica, igualdades y desigualdades, ecuaciones, conjuntos, funciones monótonas, límites, inducción y cardinales. En cada una lees un poco aquí y completas una demostración en VS Code.</p>
+
+<h2>Qué es Mizar</h2>
+<p>Mizar es tres cosas a la vez: un <strong>lenguaje</strong> para escribir matemática con todo detalle, un <strong>verificador</strong> que comprueba cada paso, y una <strong>biblioteca</strong>, la MML (<em>Mizar Mathematical Library</em>), con unos 1500 artículos ya verificados que van desde los axiomas de la teoría de conjuntos hasta el análisis y el álgebra.</p>
+<p>Una demostración en Mizar se parece a la de un libro: «sea x…», «supongamos que…», «luego…», «por lo tanto…». No se dan órdenes a un asistente; se <em>declara</em> el razonamiento y el verificador decide si cada paso se sigue de los anteriores.</p>
+<div class="bloque"><pre class="miz">theorem
+  for x being Real st 0 < x holds 0 < x/2
+proof
+  let x be Real;
+  assume 0 < x;
+  hence 0 < x/2 by XREAL_1:215;
+end;</pre></div>
+<p>Debajo hay lógica clásica de primer orden y teoría de conjuntos. Encima, un sistema de tipos pensado para que las fórmulas se escriban como en la pizarra.</p>
+
+<h2>Cómo se usa este tutorial</h2>
+<ol class="t">
+<li><strong>Lee</strong> la lección. El código de los ejemplos sale de artículos que se verifican con Mizar 8.1.15.</li>
+<li><strong>Abre</strong> en VS Code el archivo que indica la sección <em>Manos a la obra</em>. Está en la carpeta <c>text</c> y le faltan renglones, señalados con comentarios <c>:: EJERCICIO n:</c>.</li>
+<li><strong>Compila</strong> con <em>Mizar Compile</em>. Verás los errores que produce cada hueco.</li>
+<li><strong>Completa</strong> los renglones y vuelve a compilar, hasta que no quede ningún error. Si te atascas, cada ejercicio tiene pistas y la solución; el archivo resuelto está en <c>soluciones</c>.</li>
+<li><strong>Marca</strong> el ejercicio como hecho. El avance se guarda en este navegador.</li>
+</ol>
+
+<h2>Preparación</h2>
+<p>Hace falta tener instalado Mizar (con sus programas en el <c>PATH</c> y la variable <c>MIZFILES</c> apuntando a la biblioteca), Python&nbsp;3 y VS Code con la extensión <em>Mizar extension</em>. El archivo <c>README.md</c> del tutorial explica cómo instalarlos. Después, comprueba que funciona:</p>
+<ul class="lista-prep" id="prep">
+<li><input type="checkbox" id="prep1" data-prep="1"><label for="prep1">En VS Code, <em>Archivo → Abrir carpeta…</em> y elige la carpeta del tutorial, <c>tutorial-mizar</c> (la que contiene <c>text</c> y <c>dict</c>).</label></li>
+<li><input type="checkbox" id="prep2" data-prep="2"><label for="prep2">Abre <c>text/t01_hola.miz</c>. Debe verse con colores: es la extensión reconociendo el lenguaje.</label></li>
+<li><input type="checkbox" id="prep3" data-prep="3"><label for="prep3">Ejecuta <em>Mizar Compile</em>: con el botón ▷ de arriba a la derecha del editor, o abriendo la paleta de comandos (<kbd>Ctrl+Shift+P</kbd>; en macOS, <kbd>⇧⌘P</kbd>) y escribiendo «Mizar Compile».</label></li>
+<li><input type="checkbox" id="prep4" data-prep="4"><label for="prep4">Mira el panel <em>Mizar output</em> (barras de avance de <em>Parser</em>, <em>Analyzer</em> y <em>Checker</em>) y el panel <em>Problemas</em> (<kbd>Ctrl+Shift+M</kbd>; en macOS, <kbd>⇧⌘M</kbd>): deben aparecer tres errores. Son los ejercicios de la lección 1.</label></li>
+</ul>
+<div class="nota"><b>Si no compila</b>
+<p>Si VS Code avisa <em>You have to set environment variable "MIZFILES"</em>, es que no heredó las variables de tu terminal: ciérralo y ábrelo desde una terminal donde la variable esté definida, con <c>code tutorial-mizar</c>. En Linux y macOS, la extensión necesita además que los programas de Mizar estén en el <c>PATH</c>.</p></div>
+
+<h3>La carpeta del tutorial</h3>
+<div class="arbol">tutorial-mizar/
+├── README.md         <span>instalación y versiones</span>
+├── index.html        <span>esta página</span>
+├── text/             <span>los artículos con huecos: aquí trabajas</span>
+│   ├── t01_hola.miz
+│   └── …
+├── soluciones/       <span>los mismos artículos, completos y verificados</span>
+├── dict/             <span>vocabularios: los símbolos nuevos de cada artículo</span>
+├── verificar.sh      <span>compila desde la terminal</span>
+├── mml.py            <span>busca teoremas en la biblioteca</span>
+└── _fuentes/         <span>de dónde se generan esta página y los ejercicios</span></div>
+<p>La disposición no es casual. Mizar busca los vocabularios en una carpeta <c>dict</c> y la biblioteca local en una carpeta <c>prel</c>, ambas en el directorio de trabajo; la extensión de VS Code usa como directorio de trabajo el padre de la carpeta donde está el <c>.miz</c>. Por eso los artículos van en <c>text</c> (o en <c>soluciones</c>) y <c>dict</c> está al lado.</p>
+<p>Al compilar, Mizar deja junto al <c>.miz</c> una veintena de archivos auxiliares con el mismo nombre y otras extensiones. Puedes ignorarlos.</p>
+
+<h3>Desde la terminal</h3>
+<p>Todo lo que hace la extensión se puede hacer también a mano, desde la carpeta <c>tutorial-mizar</c> (en Linux y macOS):</p>
+<div class="bloque"><pre class="miz">./verificar.sh t01_hola        :: compila text/t01_hola.miz y lista los errores
+./verificar.sh -s t01_hola     :: lo mismo con soluciones/t01_hola.miz
+./mml.py XREAL_1:215           :: muestra un teorema de la MML
+./mml.py -g 'sqrt.*<=' SQUARE_1   :: busca teoremas por expresión regular</pre></div>
+
+<h2>El mapa: los nueve pasos</h2>
+<p>El tutorial sigue el recorrido de <a href="https://www.cs.ru.nl/~freek/mizar/mizman.pdf"><em>Writing a Mizar article in nine easy steps</em></a>, de Freek Wiedijk, y cubre todos sus temas, pero con ejemplos de matemática de grado y con la sintaxis de la versión actual de Mizar. Cada lección indica a qué parte del manual corresponde.</p>
+<div class="tabla-caja"><table class="tabla mapa-pasos">
+<thead><tr><th>Paso del manual</th><th>De qué trata</th><th>Lecciones</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>La matemática: pensar la demostración antes de formalizarla</td><td><a href="#l19">19</a></td></tr>
+<tr><td>2</td><td>El artículo vacío, compilar, leer errores</td><td><a href="#l01">1</a></td></tr>
+<tr><td>3</td><td>El enunciado: fórmulas, términos y tipos</td><td><a href="#l02">2</a>, <a href="#l06">6</a></td></tr>
+<tr><td>4</td><td>El entorno: qué se importa de la MML</td><td><a href="#l06">6</a>, <a href="#l12">12</a></td></tr>
+<tr><td>5</td><td>Definiciones y lemas</td><td><a href="#l11">11</a></td></tr>
+<tr><td>6</td><td>El esqueleto de la demostración</td><td><a href="#l03">3</a>, <a href="#l05">5</a>, <a href="#l07">7</a></td></tr>
+<tr><td>7</td><td>Justificar cada paso; buscar en la MML</td><td><a href="#l04">4</a>, <a href="#l08">8</a>, <a href="#l10">10</a></td></tr>
+<tr><td>8</td><td>Limpiar el artículo</td><td><a href="#l18">18</a></td></tr>
+<tr><td>9</td><td>Biblioteca local y envío a la MML</td><td><a href="#l18">18</a></td></tr>
+<tr><td>Cap. 2</td><td>Operador de Fraenkel, esquemas, estructuras</td><td><a href="#l16">16</a>, <a href="#l15">15</a>, <a href="#l17">17</a></td></tr>
+</tbody></table></div>
+
+<h3>Si lees el manual junto con el tutorial</h3>
+<p>El manual se escribió para Mizar 7.0 (2004). Casi todo sigue valiendo, pero varios ejemplos ya no compilan tal cual. Las diferencias que más se notan:</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>En el manual</th><th>Hoy (Mizar 8.1.15)</th></tr></thead>
+<tbody>
+<tr><td><c>let x be set</c> para un elemento cualquiera</td><td><c>let x be object</c>. El tipo más general es <c>object</c>; <c>set</c> se reserva para lo que puede tener elementos.</td></tr>
+<tr><td><c>definition … cluster … end;</c></td><td>Los registros van en bloques <c>registration … end;</c> y se importan con la directiva <c>registrations</c>.</td></tr>
+<tr><td>Ocho directivas en el entorno</td><td>Hay dos más: <c>equalities</c> y <c>expansions</c> (lecciones <a href="#l06">6</a> y <a href="#l10">10</a>).</td></tr>
+<tr><td><c>AXIOMS:22</c>, <c>REAL_1</c>, <c>REAL_2</c></td><td>Las propiedades del orden están en <c>XXREAL_0</c> y <c>XREAL_1</c>. La transitividad es <c>XXREAL_0:2</c>.</td></tr>
+<tr><td><c>a,b are_relative_prime</c></td><td><c>a,b are_coprime</c></td></tr>
+<tr><td><c>real number</c>, <c>natural number</c></td><td><c>Real</c> y <c>Nat</c> (abreviaturas de <c>real Number</c> y <c>natural Number</c>).</td></tr>
+<tr><td><c>from NAT_1:sch 1</c> para la inducción</td><td><c>from NAT_1:sch 2</c></td></tr>
+<tr><td><c>mizf text\articulo.miz</c> escribe los errores dentro del archivo</td><td>Sigue existiendo, pero con VS Code los errores se ven en el panel <em>Problemas</em> y el archivo no se toca.</td></tr>
+</tbody></table></div>
+
+<div class="reinicio"><span>El avance se guarda sólo en este navegador.</span><button type="button" class="btn" id="btn-reinicio">Borrar mi avance</button><span id="reinicio-conf" hidden>¿Seguro? <button type="button" class="btn" id="btn-reinicio-si">Sí, borrar</button> <button type="button" class="btn" id="btn-reinicio-no">No</button></span></div>
+</section>

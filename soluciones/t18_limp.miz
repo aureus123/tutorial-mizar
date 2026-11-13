@@ -1,0 +1,75 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 18: limpieza de un artículo
+:: ====================================================================
+::  Este artículo es correcto (Mizar Compile no da errores) pero tiene
+::  "grasa": referencias, pasos, etiquetas e importaciones que sobran.
+::  Mizar trae utilidades que la señalan. En VS Code están en la paleta
+::  de comandos (y en el menú del botón de compilar):
+::     Irrelevant Vocabularies (irrvoc)   Irrelevant Theorems (irrths)
+::     Irrelevant Premises (relprem)      Irrelevant Label (chklab)
+::     Inaccessible Items (inacc)         Irrelevant Inferences (relinfer)
+::     Irrelevant Iterative Steps (reliters)   Trivial Proofs (trivdemo)
+::  Cada una marca lo que sobra como si fuera un error. Ejecútalas una
+::  por una y limpia el artículo hasta que ninguna proteste.
+
+environ
+
+:: EJERCICIO 1: Ejecuta "Irrelevant Vocabularies". Marca con *709 los
+::   vocabularios que no se usan: quítalos de la lista.
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   SQUARE_1;
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, SQUARE_1;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, SQUARE_1;
+ registrations ORDINAL1, XREAL_0, SQUARE_1;
+ requirements REAL, NUMERALS, SUBSET, ARITHM;
+ equalities SQUARE_1;
+:: EJERCICIO 2: Ejecuta "Irrelevant Theorems". Marca con *706 los artículos
+::   de la directiva theorems de los que no se cita ningún teorema:
+::   quítalos.
+ theorems XCMPLX_1, XREAL_1, XXREAL_0;
+
+begin
+
+reserve a,b,c for Real;
+
+theorem
+  a <= b & b <= c implies a + a <= c + c
+proof
+  assume that
+A1: a <= b and
+A2: b <= c;
+  :: EJERCICIO 3: Limpia esta demostración. "Irrelevant Premises" marca
+  ::   (*602) una referencia que sobra; "Irrelevant Label" marca (*601)
+  ::   una etiqueta que nadie cita; al quitar esa etiqueta, "Inaccessible
+  ::   Items" marca (*610-*611) el paso entero, que no sirve para nada;
+  ::   "Irrelevant Inferences" marca (*604) una referencia a un paso que
+  ::   se puede saltar. Deben quedar dos renglones.
+  a <= c by A1,A2,XXREAL_0:2;
+  hence thesis by XREAL_1:7;
+end;
+
+theorem
+  a <> 0 implies (a^2 + a)/a = a + 1
+proof
+  assume
+A1: a <> 0;
+  :: EJERCICIO 4: Ejecuta "Irrelevant Iterative Steps". Marca con *746 un
+  ::   término de la igualdad iterada que se puede saltar: quita ese
+  ::   renglón (el siguiente ".=" pasa a continuar desde el anterior).
+  (a^2 + a)/a = (a + 1)*a/a
+    .= a + 1 by A1,XCMPLX_1:89;
+  hence thesis;
+end;
+
+theorem
+  2*a*b <= a^2 + b^2
+proof
+  :: EJERCICIO 5: "Trivial Proofs" marca (*607) una subdemostración que se
+  ::   puede sustituir por una justificación simple con by. Además,
+  ::   "Irrelevant Premises" marca (*603) un then que sobra, y el paso al
+  ::   que apuntaba ese then queda sin uso. Limpia: deben quedar tres
+  ::   renglones.
+  0 <= (a - b)*(a - b) by XREAL_1:63;
+  then 0 + 2*a*b <= a^2 + b^2 - 2*a*b + 2*a*b by XREAL_1:6;
+  hence thesis;
+end;

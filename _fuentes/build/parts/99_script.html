@@ -1,0 +1,690 @@
+</main>
+</div>
+<script>
+"use strict";
+const DATOS = /*__DATOS__*/;
+
+/* ------------------------------------------------------------------ índice */
+const GRUPOS = [
+  ["Para empezar", [["inicio", "", "Preparación", []]]],
+  ["Lógica y demostraciones", [
+    ["l01", "1", "El primer artículo", ["t01_hola"]],
+    ["l02", "2", "Fórmulas", ["t02_form"]],
+    ["l03", "3", "El esqueleto de una demostración", ["t03_esq"]],
+    ["l04", "4", "Justificaciones", ["t04_just"]],
+    ["l05", "5", "Usar lo que se sabe", ["t05_elim"]]]],
+  ["Números", [
+    ["l06", "6", "Términos, tipos y entorno", ["t06_env"]],
+    ["l07", "7", "Igualdades", ["t07_igu"]],
+    ["l08", "8", "Desigualdades y la MML", ["t08_des"]],
+    ["l09", "9", "Ecuaciones polinómicas", ["t09_ecu"]]]],
+  ["Conjuntos y definiciones", [
+    ["l10", "10", "Conjuntos", ["t10_conj"]],
+    ["l11", "11", "Definiciones", ["t11_def"]],
+    ["l12", "12", "Registros y propiedades", ["t12_reg"]]]],
+  ["Funciones y análisis", [
+    ["l13", "13", "Funciones", ["t13_fun"]],
+    ["l14", "14", "Límites y continuidad", ["t14_lim"]]]],
+  ["Más allá del primer orden", [
+    ["l15", "15", "Inducción y esquemas", ["t15_ind"]],
+    ["l16", "16", "Comprensión y cardinales", ["t16_card"]],
+    ["l17", "17", "Estructuras", ["t17_estr"]]]],
+  ["Oficio", [
+    ["l18", "18", "Limpieza y biblioteca local", ["t18_limp", "t18_uso"]],
+    ["l19", "19", "Proyecto final", ["t19_proy"]]]],
+  ["Referencia", [
+    ["chuleta", "", "Chuleta", []],
+    ["errores", "", "Errores frecuentes", []]]]
+];
+const VISTAS = GRUPOS.flatMap(g => g[1]);
+
+/* ------------------------------------------------------------- persistencia */
+const CLAVE = "mizar-paso-a-paso-v1";
+let estado = { hechos: {}, prep: {}, tema: "auto" };
+try {
+  const g = JSON.parse(localStorage.getItem(CLAVE) || "null");
+  if (g && typeof g === "object") estado = Object.assign(estado, g);
+} catch (e) { /* sin almacenamiento: la página funciona igual */ }
+function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(estado)); } catch (e) {} }
+
+/* ------------------------------------------------------------------ útiles */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function el(tag, attrs, html) {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) { if (k === "class") e.className = attrs[k]; else e.setAttribute(k, attrs[k]); }
+  if (html != null) e.innerHTML = html;
+  return e;
+}
+/* [[código]] dentro de un texto -> <code> */
+function rico(s) { return esc(s).replace(/\[\[(.+?)\]\](?!\])/g, "<code>$1</code>"); }
+function escAttr(s) { return esc(s).replace(/"/g, "&quot;"); }
+
+/* ------------------------------------------------------- resaltado de Mizar */
+const PALABRAS = new Set(("environ begin vocabularies notations constructors registrations requirements definitions " +
+  "equalities expansions theorems schemes reserve for being be st holds ex implies iff not or contradiction thesis " +
+  "theorem proof end let assume that and thus hence then take consider such per cases suppose case hereby now " +
+  "reconsider as set defpred deffunc means equals definition registration cluster coherence existence uniqueness " +
+  "func pred attr mode struct redefine notation synonym antonym scheme provided from by is of it where qua the " +
+  "reflexivity symmetry commutativity irreflexivity asymmetry connectedness idempotence involutiveness given if " +
+  "otherwise non").split(" "));
+function resaltar(src) {
+  return src.split("\n").map(linea => {
+    const i = linea.indexOf("::");
+    let cod = i >= 0 ? linea.slice(0, i) : linea;
+    const com = i >= 0 ? linea.slice(i) : "";
+    let out = "";
+    const m = cod.match(/^(\s*)(:?[A-Za-z][A-Za-z0-9_']*:)(?=\s|$)/);
+    if (m && !/^\s*(theorem|scheme)\b/.test(cod)) { out += m[1] + '<span class="l">' + esc(m[2]) + "</span>"; cod = cod.slice(m[0].length); }
+    const re = /([A-Z][A-Z0-9_]*:(?:def |sch )?\d+)|([A-Za-z_][A-Za-z0-9_']*)|(\s+)|([^A-Za-z_\s]+)/g;
+    let t;
+    while ((t = re.exec(cod))) {
+      if (t[1]) out += '<span class="r">' + esc(t[1]) + "</span>";
+      else if (t[2]) out += PALABRAS.has(t[2]) ? '<span class="k">' + t[2] + "</span>" : esc(t[2]);
+      else out += esc(t[0]);
+    }
+    if (com) out += '<span class="c">' + esc(com) + "</span>";
+    return out;
+  }).join("\n");
+}
+function bloque(src) {
+  const d = el("div", { class: "bloque" });
+  const p = el("pre", { class: "miz" });
+  p.dataset.src = src; p.innerHTML = resaltar(src);
+  d.appendChild(p); ponerCopiar(d);
+  return d;
+}
+function ponerCopiar(d) {
+  const pre = $("pre", d);
+  const b = el("button", { type: "button", class: "copiar" }, "Copiar");
+  b.addEventListener("click", () => {
+    const txt = pre.dataset.src != null ? pre.dataset.src : pre.textContent;
+    const ok = () => { b.textContent = "Copiado"; setTimeout(() => (b.textContent = "Copiar"), 1400); };
+    const plan = () => { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, plan); else plan();
+  });
+  d.appendChild(b);
+}
+
+/* -------------------------------------------------------------- los errores */
+const ERRORES = [
+  [4, "This inference is not accepted", "El verificador no logró convencerse de ese paso.", "Si el paso es cierto: cita lo que falta con <code>by</code>, usa <code>then</code>, o pártelo en dos pasos más pequeños. Varios *4 en el mismo sitio indican que la conclusión es una conjunción y fallan varias partes. Si es falso, corrígelo."],
+  [51, "Invalid conclusion", "El <code>thus</code> (o <code>hence</code>) no coincide con el comienzo de la tesis.", "Revisa qué queda por demostrar y en qué orden. Quizá falta un <code>let</code>, <code>assume</code> o <code>take</code> antes."],
+  [52, "Invalid assumption", "El <code>assume</code> no coincide con el antecedente de la tesis.", "La tesis debe ser una implicación (o un <code>for … st …</code> ya abierto con <code>let</code>) y lo supuesto, su antecedente."],
+  [55, "Invalid generalization", "Hay un <code>let</code> pero la tesis no empieza por <code>for</code>.", "Si la tesis es un predicado definido (como <code>X c= Y</code>), falta la directiva <code>definitions</code> que permite desplegarlo."],
+  [60, "Something remains to be proved in this case", "A un caso de <code>per cases</code> le falta llegar a la tesis.", "Termina el caso con un <code>thus</code> o <code>hence</code> antes de su <code>end;</code>."],
+  [70, "Something remains to be proved", "Se llegó a <code>end;</code> y la tesis no quedó demostrada.", "Falta al menos un paso de conclusión (<code>thus</code>, <code>hence</code>)."],
+  [102, "Unknown predicate", "El predicado existe, pero no con argumentos de esos tipos.", "Suele faltar un registro en <code>registrations</code> (un argumento no tiene el adjetivo esperado) o un artículo en <code>notations</code>."],
+  [103, "Unknown functor", "El functor existe, pero no con argumentos de esos tipos.", "Lo mismo que *102. Comprueba los tipos con enunciados de prueba <code>t is T;</code>. Si son numerales, revisa <code>requirements NUMERALS, SUBSET</code>."],
+  [116, 'Invalid "qua"', "El término no tiene el tipo que se le atribuye con <code>qua</code>.", "Falta un registro, o hay que usar <code>reconsider</code> con su justificación."],
+  [136, "Non registered cluster", "Se usó un tipo con adjetivos sin que conste que existe algún objeto así.", "Falta un registro existencial: impórtalo con <code>registrations</code> o escríbelo (<code>cluster A for T;</code>)."],
+  [140, "Unknown variable", "Un identificador que no es variable ni símbolo conocido.", "¿Está declarada (con <code>let</code>, <code>consider</code>, <code>reserve</code>…)? Si es un numeral como <code>0</code>, falta el vocabulario <code>CARD_1</code> o la notación <code>ORDINAL1</code>."],
+  [144, "Unknown label", "Se cita una etiqueta que no existe en ese punto.", "Revisa el nombre. Las etiquetas de una subdemostración no se ven desde fuera."],
+  [149, "Unknown private predicate", "Se usa <code>P[…]</code> sin haberlo definido.", "Falta el <code>defpred</code> (o, para *148, el <code>deffunc</code>)."],
+  [151, "Unknown mode format", "El símbolo de modo existe, pero no con esa cantidad de argumentos.", "Falta el artículo en <code>notations</code> y <code>constructors</code>."],
+  [164, "Nothing to link", "Hay un <code>then</code> o <code>hence</code> sin un paso anterior al que referirse.", "Falta el paso anterior, o sobra el <code>then</code> (usa <code>thus</code> en vez de <code>hence</code>)."],
+  [165, "Unknown functor format", "El símbolo se reconoce, pero no su forma de uso (*165, *166; *153 para predicados).", "Falta el artículo que lo define en <code>notations</code> y <code>constructors</code>."],
+  [190, "Inaccessible theorem", "El teorema citado usa nociones que este artículo no importa (*190, *192).", "Agrega a <code>constructors</code> los artículos que faltan; guíate por el entorno del artículo citado."],
+  [191, 'Check if scheme is in "schemes" or all constructors are available', "El esquema citado no está disponible.", "Agrega el artículo a <code>schemes</code>."],
+  [200, "Too long source line", "Un renglón de más de 80 caracteres.", "Pártelo. Vale también para los comentarios."],
+  [203, "Unknown token, maybe an illegal character used in an identifier", "Una palabra que no es variable, palabra reservada ni símbolo importado.", "Si es un símbolo: falta su vocabulario (<code>findvoc -w 'símbolo'</code>). Si es una referencia como <code>XREAL_1:6</code>: falta el artículo en <code>theorems</code>."],
+  [214, '"end" missing', "Falta cerrar un bloque.", "Cada <code>proof</code>, <code>now</code>, <code>hereby</code>, <code>suppose</code>, <code>definition</code> lleva su <code>end;</code>."],
+  [306, "Attribute symbol expected", "Donde debía ir un tipo hay algo que no se reconoce.", "Suele ser un modo (<code>Real</code>, <code>Nat</code>) cuyo vocabulario falta."],
+  [321, 'Predicate symbol or "is" expected', "Error de sintaxis: eso no es una fórmula.", "Revisa el renglón; quizá falta un punto y coma en el anterior."],
+  [330, 'Unexpected end of an item (perhaps ";" missing)', "Mizar esperaba que el paso continuara.", "Casi siempre falta un punto y coma."],
+  [336, 'Associative notation must not be used for "iff" and "implies"', "Se encadenaron <code>implies</code> o <code>iff</code> sin paréntesis.", "Escribe <code>A implies (B implies C)</code> o <code>(A implies B) implies C</code>."],
+  [395, "Justification expected", "Después de un enunciado no viene ni <code>;</code>, ni <code>by</code>, ni <code>proof</code>.", "Suele ser consecuencia de un error anterior en el mismo renglón."],
+  [601, "Irrelevant label", "Utilidad <code>chklab</code>: nadie cita esa etiqueta.", "Bórrala (en los teoremas puedes dejarla)."],
+  [602, "Irrelevant reference", "Utilidad <code>relprem</code>: esa referencia no hace falta (*603: sobra el <code>then</code>).", "Quítala del <code>by</code>."],
+  [604, "Irrelevant inference", "Utilidad <code>relinfer</code>: el paso citado se puede saltar (*605: el enlazado con <code>then</code>).", "Opcional: cita directamente las referencias de ese paso. Hazlo sólo si la demostración no pierde claridad."],
+  [607, "Justification can be straightforward", "Utilidad <code>trivdemo</code>: la subdemostración cabe en un <code>by</code>.", "Sustituye <code>proof … end;</code> por <code>by …;</code>."],
+  [610, "Beginning of an inaccessible item", "Utilidad <code>inacc</code>: ese paso no se usa (*611 marca su final).", "Bórralo."],
+  [706, 'Unnecessary item in the "theorems" directive', "Utilidad <code>irrths</code>: no se cita ningún teorema de ese artículo.", "Quítalo de <code>theorems</code>."],
+  [709, 'Irrelevant item in the "vocabularies" directive', "Utilidad <code>irrvoc</code>: no se usa ningún símbolo de ese vocabulario.", "Quítalo de <code>vocabularies</code>."],
+  [746, "References can be moved to the next step of this iterative equality", "Utilidad <code>reliters</code>: ese término de la igualdad iterada sobra.", "Quita el renglón y pasa sus referencias al siguiente."],
+  [801, "Cannot find vocabulary file", "No existe el vocabulario nombrado en <code>vocabularies</code>.", "Revisa el nombre; si es tuyo, debe estar en <code>dict/nombre.voc</code>, en minúsculas."],
+  [803, "Cannot find notations file", "El artículo nombrado no está en la MML ni en la biblioteca local (*802 a *809).", "Revisa el nombre. Si es un artículo tuyo, expórtalo antes con <code>miz2prel</code>."],
+  [830, "Nothing imported from notations", "El artículo nombrado no aporta nada a esa directiva (*830 a *834).", "Suele faltar ese mismo artículo en <code>constructors</code>, o sobra en la directiva señalada."],
+  [856, "Inaccessible requirements directive", "Un requisito necesita constructores que no están importados.", "Para <code>REAL</code> hace falta <code>XXREAL_0</code> en <code>constructors</code>; para <code>BOOLE</code> y <code>SUBSET</code>, <code>XBOOLE_0</code> y <code>SUBSET_1</code> (directa o indirectamente)."]
+];
+const ERR_ES = {};
+ERRORES.forEach(e => (ERR_ES[e[0]] = e[2]));
+Object.assign(ERR_ES, { 166: ERR_ES[165], 153: ERR_ES[165], 192: ERR_ES[190], 148: "Se usa <code>F(…)</code> sin haberlo definido con <code>deffunc</code>.",
+  603: "Sobra el <code>then</code>: el paso no usa al anterior.", 605: "El paso anterior (enlazado con <code>then</code>) se puede saltar.",
+  611: "Fin de un paso que no se usa.", 802: ERR_ES[803], 805: ERR_ES[803], 806: ERR_ES[803], 808: ERR_ES[803], 809: ERR_ES[803],
+  831: ERR_ES[830], 832: ERR_ES[830], 833: ERR_ES[830], 391: "Error de sintaxis al comienzo de un elemento del texto." });
+function glosa(c, msg) { return ERR_ES[c] || esc(msg || ""); }
+
+/* -------------------------------------------------------------- la práctica */
+const NOTAS = {
+  t06_env: "Esta vez los huecos están en el <strong>entorno</strong>. Resuélvelos en orden y compila después de cada uno: cada arreglo deja al descubierto el problema siguiente.",
+  t11_def: "El primer ejercicio no se resuelve en el <code>.miz</code>: hay que crear un vocabulario. Mientras no exista, el entorno falla y Mizar no revisa nada más; por eso al principio sólo verás un error. (El archivo de <code>soluciones</code> usa un vocabulario ya hecho, <code>T11_SOL</code>, para compilar sin depender del tuyo.)",
+  t18_limp: "Este artículo <strong>compila sin errores</strong>. Los ejercicios consisten en pasarle las utilidades de limpieza y quitar lo que señalan. Esto es lo que encuentra cada una antes de tocar nada:",
+  t18_bib: "Este artículo está completo, sin huecos. Léelo, compílalo y después expórtalo a la biblioteca local desde una terminal situada en la carpeta <code>tutorial-mizar</code>: <code>miz2prel text/t18_bib</code>. Debe aparecer una carpeta <code>prel</code> con cinco archivos <code>t18_bib.*</code>.",
+  t18_uso: "Necesita que hayas exportado <code>t18_bib</code>. Si al agregar <code>T18_BIB</code> al entorno aparecen errores *803 o *808, es que falta ejecutar <code>miz2prel</code>.",
+  t19_proy: "Cada teorema termina en un punto y coma solitario, y por eso hay cinco <code>*4</code>. Sustituye cada punto y coma por una demostración completa."
+};
+const UTIL_NOMBRE = { irrvoc: "Irrelevant Vocabularies", irrths: "Irrelevant Theorems", relprem: "Irrelevant Premises", chklab: "Irrelevant Label",
+  inacc: "Inaccessible Items", relinfer: "Irrelevant Inferences", reliters: "Irrelevant Iterative Steps", trivdemo: "Trivial Proofs" };
+
+function consignaHTML(t) {
+  return esc(t).replace(/"([^"]+)"/g, (m, x) =>
+    /[áéíóúñ¿]|(^|\s)(si|entonces|existe|para todo|no todo|todo|equivale)(\s|$)/i.test(x) ? "«" + x + "»" : "<code class=\"l\">" + x + "</code>");
+}
+function listaErrores(errs) {
+  const ul = el("ul", { class: "errlista" });
+  errs.forEach(e => ul.appendChild(el("li", null,
+    '<span class="pos">renglón ' + e.linea + '</span><span class="chip">*' + e.cod + "</span><span>" + glosa(e.cod, e.msg) + "</span>")));
+  return ul;
+}
+function pintarPractica(caja) {
+  const arch = caja.dataset.archivo, d = DATOS[arch];
+  if (!d) return;
+  caja.appendChild(el("h2", null, "Manos a la obra"));
+  caja.appendChild(el("div", { class: "archivo" }, "text/" + arch + ".miz"));
+  const info = el("div", { class: "caja-arch" });
+  if (NOTAS[arch]) info.appendChild(el("p", null, NOTAS[arch]));
+  if (arch === "t18_limp") {
+    const ul = el("ul", { class: "errlista" });
+    Object.keys(d.util).forEach(u => {
+      const v = d.util[u];
+      ul.appendChild(el("li", { style: "grid-template-columns: 190px minmax(0,1fr)" }, "<span>" + UTIL_NOMBRE[u] + "</span><span>" +
+        (v.length ? v.map(e => '<span class="chip util">*' + e.cod + "</span> renglón " + e.linea).join(" &nbsp; ") : "nada todavía (aparece al quitar una etiqueta)") + "</span>"));
+    });
+    info.appendChild(ul);
+  } else if (d.ejercicios.length) {
+    const n = d.errores.length;
+    info.appendChild(el("p", null, "Ábrelo en VS Code y ejecuta <em>Mizar Compile</em>. Antes de tocar nada " +
+      (n === 1 ? "verás un error:" : "verás " + n + " errores:")));
+    info.appendChild(listaErrores(d.errores));
+    if (arch === "t06_env") {
+      const tb = el("table", { class: "tabla", style: "margin-top:12px" });
+      tb.innerHTML = "<thead><tr><th>Ejercicios resueltos</th><th>Errores que quedan</th></tr></thead>";
+      const body = el("tbody");
+      d.etapas.forEach((cods, k) => body.appendChild(el("tr", null, "<td>" + k + "</td><td>" +
+        (cods.length ? cods.map(c => '<span class="chip">*' + c + "</span>").join(" ") : "ninguno") + "</td>")));
+      tb.appendChild(body); const cj = el("div", { class: "tabla-caja" }); cj.appendChild(tb); info.appendChild(cj);
+    } else {
+      info.appendChild(el("p", { style: "margin-top:10px" }, "Completa los huecos y vuelve a compilar hasta que no quede ninguno. Los números de renglón se mueven a medida que escribes. El archivo resuelto es <code>soluciones/" + arch + ".miz</code>."));
+    }
+  }
+  caja.appendChild(info);
+  const ejs = el("div", { class: "ejs" });
+  d.ejercicios.forEach(x => ejs.appendChild(tarjeta(arch, x)));
+  caja.appendChild(ejs);
+}
+function tarjeta(arch, x) {
+  const clave = arch + ":" + x.id, idc = "ej-" + arch + "-" + x.id;
+  const t = el("div", { class: "ej" + (estado.hechos[clave] ? " hecho" : "") });
+  const cab = el("div", { class: "ej-cab" });
+  cab.innerHTML = '<label for="' + idc + '"><input type="checkbox" id="' + idc + '"' + (estado.hechos[clave] ? " checked" : "") +
+    "> Ejercicio " + esc(x.id) + '</label><span class="donde">renglón ' + x.linea + "</span>";
+  t.appendChild(cab);
+  $("input", cab).addEventListener("change", ev => {
+    if (ev.target.checked) estado.hechos[clave] = 1; else delete estado.hechos[clave];
+    t.classList.toggle("hecho", ev.target.checked); guardar(); pintarAvance();
+  });
+  t.appendChild(el("p", null, consignaHTML(x.consigna)));
+  if (x.sint.length) t.appendChild(el("div", { class: "sintoma" }, "Mientras siga sin resolver, Mizar dirá: " +
+    x.sint.map(s => '<span class="chip' + (s.cod >= 600 && s.cod < 800 ? " util" : "") + '" title="' + escAttr(s.msg) + '">*' + s.cod + "</span>").join(" ")));
+  const bot = el("div", { class: "ej-bot" });
+  const lp = el("ul", { class: "pistas" }); lp.hidden = true;
+  let dadas = 0;
+  if (x.pistas.length) {
+    const bp = el("button", { type: "button", class: "btn" }, "Pista");
+    bp.addEventListener("click", () => {
+      if (dadas < x.pistas.length) {
+        lp.hidden = false;
+        lp.appendChild(el("li", null, "<b>Pista " + (dadas + 1) + "</b>" + x.pistas[dadas]));
+        dadas++;
+      }
+      if (dadas >= x.pistas.length) { bp.disabled = true; bp.textContent = "No hay más pistas"; }
+      else bp.textContent = "Otra pista (" + dadas + " de " + x.pistas.length + ")";
+    });
+    bot.appendChild(bp);
+  }
+  const sol = el("div", { class: "solucion" }); sol.hidden = true;
+  const bs = el("button", { type: "button", class: "btn" }, "Ver solución");
+  bs.addEventListener("click", () => {
+    if (!sol.childNodes.length) {
+      if (x.alt && x.alt.trim()) { sol.appendChild(el("p", { class: "rot" }, x.sol.trim() ? "En lugar de" : "Borra")); sol.appendChild(bloque(x.alt)); }
+      if (x.sol.trim()) { sol.appendChild(el("p", { class: "rot" }, x.rot ? esc(x.rot) : x.alt && x.alt.trim() ? "debe quedar" : "Hay que escribir")); sol.appendChild(bloque(x.sol)); }
+    }
+    sol.hidden = !sol.hidden; bs.textContent = sol.hidden ? "Ver solución" : "Ocultar solución";
+  });
+  bot.appendChild(bs);
+  t.appendChild(bot); t.appendChild(lp); t.appendChild(sol);
+  return t;
+}
+
+/* ------------------------------------------------------------ cuestionarios */
+const QUIZ = {
+  l01a: { p: "¿Qué significa el error *4?", o: ["Hay un error de sintaxis en ese renglón.", "El verificador no logró convencerse de que el paso es correcto.", "Falta importar algo en el entorno."], ok: 1,
+    e: "*4 es «This inference is not accepted». El texto se entiende; lo que falta es una justificación suficiente, o bien el enunciado es falso." },
+  l01b: { p: "¿Dónde no debe ir un punto y coma?", o: ["Al final de cada paso de una demostración.", "Entre el enunciado de un teorema y su [[proof]].", "Después de [[end]]."], ok: 1,
+    e: "Un punto y coma tras el enunciado es una justificación vacía: Mizar intenta comprobarlo solo y el [[proof]] que sigue queda huérfano." },
+  l02a: { p: "¿Cómo agrupa Mizar la fórmula [[not A & B or C]]?", o: ["[[not (A & (B or C))]]", "[[((not A) & B) or C]]", "[[(not A) & (B or C)]]"], ok: 1,
+    e: "[[not]] liga más fuerte que [[&]], y [[&]] más fuerte que [[or]]." },
+  l02b: { p: "¿Cuál traduce «todo elemento de X está en Y»?", o: ["[[for x st x in X holds x in Y]]", "[[for x holds x in X & x in Y]]", "[[ex x st x in X implies x in Y]]"], ok: 0,
+    e: "[[for x st A holds B]] abrevia [[for x holds A implies B]]. La segunda opción dice que todo objeto está en X y en Y." },
+  l03a: { p: "La tesis es [[for x holds x in X implies x in Y]]. ¿Cuál es el primer paso de esqueleto?", o: ["[[assume x in X;]]", "[[let x;]]", "[[take x;]]"], ok: 1,
+    e: "La tesis empieza por [[for]]: primero se fija un x arbitrario con [[let]]. Después la tesis será una implicación y tocará [[assume]]." },
+  l03b: { p: "La tesis es [[x in Y & x in X]] y escribes primero [[thus x in X by A1;]]. ¿Qué ocurre?", o: ["Nada: el orden de una conjunción da igual.", "Error *51, Invalid conclusion.", "Error *4."], ok: 1,
+    e: "Los [[thus]] deben seguir el orden de la tesis. Mizar no identifica [[A & B]] con [[B & A]] en el esqueleto." },
+  l04a: { p: "¿A qué equivale [[hence φ;]]?", o: ["A [[thus φ;]] justificado además por el paso anterior.", "A [[assume φ;]]", "A [[then φ;]] sin tocar la tesis."], ok: 0,
+    e: "[[hence]] = [[then]] + [[thus]]: usa el paso anterior y además concluye (reduce la tesis)." },
+  l04b: { p: "Un paso cierto da *4 con [[by A1,A2,A3]], y las tres referencias son premisas [[for …]]. ¿Qué conviene hacer?", o: ["Añadir más referencias.", "Partirlo en pasos intermedios que usen una premisa universal cada uno.", "Cambiar [[by]] por [[from]]."], ok: 1,
+    e: "El justificador particulariza una sola premisa universal por paso. Los pasos intermedios, enlazados con [[then]], hacen el resto." },
+  l05a: { p: "Sabes [[ex x st x in X]] (paso A1) y quieres trabajar con uno de esos elementos. ¿Qué escribes?", o: ["[[take a;]]", "[[let a be object;]]", "[[consider a being object such that A2: a in X by A1;]]"], ok: 2,
+    e: "[[consider]] da nombre a algo que se sabe que existe. [[take]] es para demostrar un «existe» y [[let]] para demostrar un «para todo»." },
+  l05b: { p: "La tesis es [[not ex x st x in X]]. ¿Cómo empieza una demostración por absurdo?", o: ["[[assume ex x st x in X;]]", "[[assume not ex x st x in X;]]", "[[take x;]]"], ok: 0,
+    e: "Para Mizar [[not φ]] es lo mismo que [[φ implies contradiction]]: se supone φ y queda por demostrar [[contradiction]]." },
+  l06a: { p: "¿Cuál de estos es un término, y no un tipo ni un adjetivo?", o: ["[[Nat]]", "[[natural]]", "[[NAT]]"], ok: 2,
+    e: "[[NAT]] es el conjunto de los naturales (se usa en [[n in NAT]]). [[Nat]] es un modo y [[natural]] un atributo." },
+  l06b: { p: "Aparece *203 sobre un símbolo que sabes que existe en la MML. ¿Qué directiva revisas primero?", o: ["[[vocabularies]]", "[[theorems]]", "[[requirements]]"], ok: 0,
+    e: "*203 es un problema léxico: la palabra no está en ningún vocabulario importado. [[findvoc -w 'símbolo']] dice cuál hace falta." },
+  l06c: { p: "Aparece *103 (Unknown functor) en un [[+]] entre dos términos que deberían ser números. ¿Cuál es la causa más probable?", o: ["Falta [[requirements ARITHM]].", "Falta un registro en [[registrations]]: Mizar no sabe que algún argumento es un número.", "Un error de sintaxis."], ok: 1,
+    e: "El functor existe, pero no para esos tipos. Casi siempre falta el registro que da a un argumento el adjetivo que el functor espera." },
+  l07a: { p: "¿Cuál de estos enunciados necesita citar un teorema?", o: ["[[(a + b)^2 = a^2 + 2*a*b + b^2]]", "[[a <> 0 implies a*b/a = b]]", "[[x = y + 1 implies x - y = 1]]"], ok: 1,
+    e: "Los otros dos son aritmética polinómica o lineal, que el verificador hace solo. Cancelar un divisor exige saber que no es cero: [[XCMPLX_1:89]]." },
+  l07b: { p: "En una igualdad iterada de cuatro términos, ¿cuántos puntos y coma hay?", o: ["Uno, al final.", "Uno por cada [[.=]]", "Ninguno."], ok: 0,
+    e: "Toda la cadena es un único paso. Cada tramo puede llevar su [[by]], pero sólo el último cierra con punto y coma." },
+  l08a: { p: "¿Cómo entiende Mizar [[a < b]]?", o: ["Como [[a <= b & a <> b]]", "Como [[not b <= a]]", "Como un predicado independiente de [[<=]]"], ok: 1,
+    e: "[[<]] es un antónimo de [[<=]]. Por eso los teoremas sobre [[<=]] sirven, por contrarrecíproca, para [[<]]." },
+  l08b: { p: "Necesitas [[a < b & b < c implies a < c]]. ¿Qué citas?", o: ["Nada: es automático.", "[[XXREAL_0:2]], la transitividad de [[<=]].", "Hay que buscar otro teorema, específico para [[<]]."], ok: 1,
+    e: "La transitividad no es automática, pero el mismo teorema cubre todas las variantes con desigualdades estrictas." },
+  l09a: { p: "Para demostrar [[x^2 = 9 iff x = 3 or x = -3]], ¿qué hecho de la MML es la clave?", o: ["[[XCMPLX_1:6]]: si un producto es cero, algún factor es cero.", "[[XREAL_1:63]]: un cuadrado no es negativo.", "[[SQUARE_1:22]]: la raíz de un cuadrado."], ok: 0,
+    e: "Se factoriza [[x^2 - 9 = (x - 3)*(x + 3)]], que el verificador comprueba solo, y se aplica [[XCMPLX_1:6]]." },
+  l10a: { p: "La tesis es [[X c= Y]] y empiezas con [[let x be object;]]. ¿Por qué lo acepta Mizar?", o: ["Por [[requirements BOOLE]].", "Porque [[definitions TARSKI]] le permite desplegar la definición de [[c=]] en la tesis.", "Porque [[c=]] es una abreviatura sintáctica."], ok: 1,
+    e: "Sin esa directiva el [[let]] daría *55. La definición es [[TARSKI:def 3]]." },
+  l10b: { p: "¿Qué referencia justifica pasar de [[x in X \\ Y]] a [[x in X & not x in Y]]?", o: ["[[XBOOLE_0:def 3]]", "[[XBOOLE_0:def 5]]", "[[TARSKI:def 3]]"], ok: 1,
+    e: "def 3 es la unión, def 4 la intersección y def 5 la diferencia." },
+  l11a: { p: "Defines [[func cubica a -> Real means it*it*it = a;]]. ¿Qué condiciones de corrección pide Mizar?", o: ["[[coherence]]", "[[existence]] y [[uniqueness]]", "Ninguna."], ok: 1,
+    e: "Un functor definido con [[means]] debe existir y ser único. [[coherence]] es para los definidos con [[equals]]." },
+  l11b: { p: "¿Qué renglón de un archivo [[.voc]] declara el símbolo de predicado [[es_primo_con]]?", o: ["[[Pes_primo_con]]", "[[Res_primo_con]]", "[[Oes_primo_con]]"], ok: 1,
+    e: "R de relación. O es para functores, V para atributos y M para modos." },
+  l12a: { p: "Sin un registro existencial, ¿qué ocurre al escribir [[let p be unitario Real;]]?", o: ["Error *136, Non registered cluster.", "Se acepta, pero no se puede demostrar nada sobre p.", "Error *4."], ok: 0,
+    e: "Los tipos no pueden ser vacíos: antes de usar un tipo con adjetivos hay que registrar que existe algún objeto así." },
+  l12b: { p: "¿Qué hace [[reconsider k = n as Nat by A1;]]?", o: ["Convierte n en otro número.", "Introduce k, igual a n, con tipo [[Nat]].", "Define un functor nuevo."], ok: 1,
+    e: "Es un cambio de tipo, no de objeto, y hay que justificar que n realmente es un natural." },
+  l13a: { p: "[[f]] es una [[Function of REAL,REAL]]. ¿Cómo se escribe su valor en x?", o: ["[[f(x)]]", "[[f x]]", "[[f.x]]"], ok: 2,
+    e: "Las funciones (objetos) se aplican con el punto. Los paréntesis y la yuxtaposición son para los functores (símbolos)." },
+  l13b: { p: "¿Cuánto vale [[(g*f).x]]?", o: ["[[g.(f.x)]]", "[[f.(g.x)]]", "[[g.x * f.x]]"], ok: 0,
+    e: "[[g*f]] es «g después de f», como g∘f. Es [[FUNCT_2:15]]." },
+  l14a: { p: "Tras [[let eps be Real; assume 0 < eps;]] la tesis es [[ex delta being Real st …]]. ¿Qué paso corresponde?", o: ["[[consider delta being Real such that …;]]", "[[take delta = eps/2;]]", "[[let delta be Real;]]"], ok: 1,
+    e: "Para demostrar un «existe» se exhibe un testigo con [[take]]. [[consider]] es para usar un «existe» que ya se tiene." },
+  l14b: { p: "La continuidad de g es una hipótesis (A2). ¿Cómo se consigue de ella un delta para un épsilon dado?", o: ["Con [[take]].", "Con [[consider … by A2,DefCont;]]", "Con [[let]]."], ok: 1,
+    e: "La hipótesis, desplegada, dice «para todo eps > 0 existe delta…». Se particulariza en el épsilon que interesa y se da nombre al delta con [[consider]]." },
+  l15a: { p: "¿Con qué palabra se cita un esquema?", o: ["[[by]]", "[[from]]", "[[using]]"], ok: 1,
+    e: "[[from NAT_1:sch 2(A3,A4)]]: el esquema y, entre paréntesis, los pasos que demuestran sus premisas." },
+  l15b: { p: "En [[defpred P[Nat] means 2*$1 <= 2|^$1;]], ¿qué es [[$1]]?", o: ["El argumento del predicado.", "El primer paso de la demostración.", "Un numeral."], ok: 0,
+    e: "[[P[k]]] significa [[2*k <= 2|^k]]. Con dos argumentos habría además [[$2]]." },
+  l16a: { p: "¿Por qué Mizar rechaza [[{ X where X is set : not X in X }]]?", o: ["Porque faltan paréntesis.", "Porque los objetos de tipo [[set]] no forman un conjunto: sería la paradoja de Russell.", "Porque [[in]] no se puede negar."], ok: 1,
+    e: "Las variables de un Fraenkel deben tener un tipo cuya extensión sea un conjunto: [[Nat]], [[Real]], [[Element of X]]…" },
+  l16b: { p: "Sabes [[x in {n where n is Nat : 3 < n}]]. ¿Qué te da Mizar sin citar nada?", o: ["[[ex n being Nat st x = n & 3 < n]]", "Nada: hay que citar una definición.", "[[x = 3]]"], ok: 0,
+    e: "El verificador conoce el significado del operador de Fraenkel. Ese [[ex]] se aprovecha después con [[consider]]." },
+  l17a: { p: "¿Qué es [[the carrier of G]]?", o: ["La operación de G.", "El conjunto subyacente de G.", "El elemento neutro."], ok: 1,
+    e: "[[carrier]] es el campo que heredan casi todas las estructuras de la MML desde [[1-sorted]]." },
+  l17b: { p: "En la MML, un grupo es…", o: ["una estructura con cuatro campos: conjunto, operación, neutro e inverso.", "un [[multMagma]] con los adjetivos [[Group-like]], [[associative]] y [[non empty]].", "un conjunto con una [[BinOp]] y cinco hipótesis."], ok: 1,
+    e: "El neutro y el inverso no son campos: se definen después como functores ([[1_G]], [[a\"]]) a partir de los adjetivos." },
+  l18a: { p: "¿Qué utilidad señala una referencia que sobra en un [[by]]?", o: ["Irrelevant Premises ([[relprem]])", "Irrelevant Label ([[chklab]])", "Irrelevant Theorems ([[irrths]])"], ok: 0,
+    e: "[[relprem]] marca con *602 las referencias innecesarias y con *603 los [[then]] innecesarios." },
+  l18b: { p: "Exportaste [[t18_bib]] con [[miz2prel]]. ¿Cómo citas su primer teorema desde otro artículo?", o: ["[[by Th1]]", "[[by T18_BIB:1]]", "[[by t18_bib.Th1]]"], ok: 1,
+    e: "Desde fuera los teoremas se citan por número de orden. Las etiquetas sólo existen dentro del artículo." },
+  l19a: { p: "Tu artículo tiene errores *103 y *4. ¿Cuáles arreglas primero?", o: ["Los *4.", "Los *103: hasta que los tipos estén bien, los *4 no son de fiar.", "Da igual."], ok: 1,
+    e: "El objetivo intermedio es siempre un artículo con sólo *4. A partir de ahí, cada *4 es una justificación pendiente y nada más." }
+};
+function pintarQuiz(caja) {
+  const q = QUIZ[caja.dataset.id]; if (!q) return;
+  caja.appendChild(el("div", { class: "preg" }, rico(q.p)));
+  const ops = el("div", { class: "ops" }), exp = el("p", { class: "exp" }); exp.hidden = true;
+  q.o.forEach((txt, i) => {
+    const b = el("button", { type: "button" }, rico(txt));
+    b.addEventListener("click", () => {
+      $$("button", ops).forEach((x, j) => { x.disabled = true; if (j === q.ok) x.classList.add("ok"); });
+      if (i !== q.ok) b.classList.add("no");
+      exp.innerHTML = (i === q.ok ? "<strong>Correcto.</strong> " : "<strong>No.</strong> ") + rico(q.e); exp.hidden = false;
+    });
+    ops.appendChild(b);
+  });
+  caja.appendChild(ops); caja.appendChild(exp);
+}
+
+/* ------------------------------------------------------ la tesis, paso a paso */
+const PASOS = {
+  esq1: {
+    titulo: "Transitividad",
+    cod: ["theorem",
+      "  (for x holds x in X implies x in Y) & (for x holds x in Y implies x in Z)",
+      "    implies for x holds x in X implies x in Z",
+      "proof",
+      "  assume that",
+      "A1: for x holds x in X implies x in Y and",
+      "A2: for x holds x in Y implies x in Z;",
+      "  let x;",
+      "  assume",
+      "A3: x in X;",
+      "A4: x in Y by A1,A3;",
+      "  thus x in Z by A2,A4;",
+      "end;"],
+    pasos: [
+      { l: [0, 3], t: "(for x holds x in X implies x in Y) & (for x holds x in Y implies x in Z) implies for x holds x in X implies x in Z", s: [],
+        n: "Al entrar en proof, la tesis es el enunciado completo y todavía no se sabe nada." },
+      { l: [4, 6], t: "for x holds x in X implies x in Z", s: ["A1: for x holds x in X implies x in Y", "A2: for x holds x in Y implies x in Z"],
+        n: "La tesis era una implicación: assume supone el antecedente. Como es una conjunción, se supone en dos partes con etiqueta." },
+      { l: [7, 7], t: "x in X implies x in Z", s: ["A1: for x holds x in X implies x in Y", "A2: for x holds x in Y implies x in Z", "x es un objeto fijo, arbitrario"],
+        n: "La tesis empezaba por for: let fija un x cualquiera." },
+      { l: [8, 9], t: "x in Z", s: ["A1: for x holds x in X implies x in Y", "A2: for x holds x in Y implies x in Z", "x es un objeto fijo, arbitrario", "A3: x in X"],
+        n: "Otra implicación, otro assume." },
+      { l: [10, 10], t: "x in Z", s: ["A1: for x holds x in X implies x in Y", "A2: for x holds x in Y implies x in Z", "x es un objeto fijo, arbitrario", "A3: x in X", "A4: x in Y"],
+        n: "Un paso intermedio: no toca la tesis, agrega un hecho. Sale de A1, particularizada en x, y de A3." },
+      { l: [11, 12], t: null, s: ["A1: for x holds x in X implies x in Y", "A2: for x holds x in Y implies x in Z", "x es un objeto fijo, arbitrario", "A3: x in X", "A4: x in Y"],
+        n: "thus afirma justo lo que quedaba por demostrar. No queda nada, y end cierra sin protestar." }
+    ]
+  },
+  bebedor: {
+    titulo: "El principio del bebedor",
+    cod: ["theorem Bebedor:",
+      "  ex x st x in X implies for y holds y in X",
+      "proof",
+      "  per cases;",
+      "  suppose ex x st not x in X;",
+      "    then consider a being object such that",
+      "A1:   not a in X;",
+      "    take a;",
+      "    assume a in X;",
+      "    hence thesis by A1;",
+      "  end;",
+      "  suppose",
+      "A2:   not ex x st not x in X;",
+      "    take X;",
+      "    assume X in X;",
+      "    thus for y holds y in X by A2;",
+      "  end;",
+      "end;"],
+    pasos: [
+      { l: [0, 2], t: "ex x st x in X implies for y holds y in X", s: [], n: "X es el conjunto de los que beben. Hay que encontrar un x tal que, si x bebe, todos beben." },
+      { l: [3, 3], t: "ex x st x in X implies for y holds y in X", s: [], n: "Dos casos: o hay alguien que no bebe, o no lo hay. Como son φ y not φ, per cases no necesita justificación." },
+      { l: [4, 4], t: "ex x st x in X implies for y holds y in X", s: ["(caso 1) ex x st not x in X"], n: "Primer caso: existe alguien que no bebe." },
+      { l: [5, 6], t: "ex x st x in X implies for y holds y in X", s: ["(caso 1) ex x st not x in X", "A1: not a in X"], n: "consider le da nombre: a. El then indica que su existencia viene del paso anterior." },
+      { l: [7, 7], t: "a in X implies for y holds y in X", s: ["(caso 1) ex x st not x in X", "A1: not a in X"], n: "Ese abstemio es el testigo. La tesis se particulariza en a." },
+      { l: [8, 8], t: "for y holds y in X", s: ["(caso 1) ex x st not x in X", "A1: not a in X", "a in X"], n: "Se supone el antecedente: a bebe. Pero A1 dice que no bebe." },
+      { l: [9, 10], t: null, s: ["(caso 1) ex x st not x in X", "A1: not a in X", "a in X"], n: "Lo supuesto y A1 se contradicen, y de una contradicción se sigue cualquier cosa, también la tesis. Caso cerrado." },
+      { l: [11, 12], t: "ex x st x in X implies for y holds y in X", s: ["A2: not ex x st not x in X"], n: "Segundo caso: no hay nadie que no beba. La tesis vuelve a ser la del principio, y lo sabido en el caso 1 ya no vale." },
+      { l: [13, 13], t: "X in X implies for y holds y in X", s: ["A2: not ex x st not x in X"], n: "Ahora cualquier testigo sirve. El único objeto que hay a mano es el propio X." },
+      { l: [14, 14], t: "for y holds y in X", s: ["A2: not ex x st not x in X", "X in X"], n: "Se supone el antecedente (que aquí no se usa)." },
+      { l: [15, 17], t: null, s: ["A2: not ex x st not x in X", "X in X"], n: "«No existe quien no beba» y «todos beben» son para Mizar la misma fórmula. Los dos casos están cerrados: fin." }
+    ]
+  },
+  epsdelta: {
+    titulo: "f(x) = 2x + 1 es continua en c",
+    cod: ["theorem",
+      "  (for x holds f.x = 2*x + 1) implies f es_continua_en c",
+      "proof",
+      "  assume",
+      "A1: for x holds f.x = 2*x + 1;",
+      "  let eps be Real;",
+      "  assume",
+      "A2: 0 < eps;",
+      "  take delta = eps/2;",
+      "  thus 0 < delta by A2,XREAL_1:215;",
+      "  let x;",
+      "  assume",
+      "A3: |.x - c.| < delta;",
+      "  f.x = 2*x + 1 & f.c = 2*c + 1 by A1;",
+      "  then |.f.x - f.c.| = |.2*(x - c).|",
+      "    .= |.2.|*|.x - c.| by COMPLEX1:65",
+      "    .= 2*|.x - c.| by COMPLEX1:43;",
+      "  then |.f.x - f.c.| < 2*delta by A3,XREAL_1:68;",
+      "  hence |.f.x - f.c.| < eps;",
+      "end;"],
+    pasos: [
+      { l: [0, 2], t: "(for x holds f.x = 2*x + 1) implies f es_continua_en c", s: [], n: "No hay notación para «la función 2x + 1»: se habla de cualquier f que cumpla esa fórmula." },
+      { l: [3, 4], t: "f es_continua_en c", s: ["A1: for x holds f.x = 2*x + 1"], n: "Se supone la hipótesis. Queda por demostrar la continuidad." },
+      { l: [5, 5], t: "0 < eps implies ex delta being Real st 0 < delta & for x being Real st |.x - c.| < delta holds |.f.x - f.c.| < eps", s: ["A1: for x holds f.x = 2*x + 1", "eps es un real fijo, arbitrario"],
+        n: "La tesis no empieza por for, pero su definición sí. Mizar la despliega para que el let encaje: «dado épsilon…»." },
+      { l: [6, 7], t: "ex delta being Real st 0 < delta & for x being Real st |.x - c.| < delta holds |.f.x - f.c.| < eps", s: ["A1: for x holds f.x = 2*x + 1", "eps es un real fijo, arbitrario", "A2: 0 < eps"], n: "«…positivo»." },
+      { l: [8, 8], t: "0 < delta & for x being Real st |.x - c.| < delta holds |.f.x - f.c.| < eps", s: ["A1: for x holds f.x = 2*x + 1", "eps es un real fijo, arbitrario", "A2: 0 < eps", "delta = eps/2"],
+        n: "«…elijo delta = eps/2». take con un signo igual da además nombre al testigo." },
+      { l: [9, 9], t: "for x being Real st |.x - c.| < delta holds |.f.x - f.c.| < eps", s: ["A1: for x holds f.x = 2*x + 1", "eps es un real fijo, arbitrario", "A2: 0 < eps", "delta = eps/2"],
+        n: "La tesis era una conjunción; su primera parte, que delta es positivo, sale de A2 y un teorema de XREAL_1." },
+      { l: [10, 10], t: "|.x - c.| < delta implies |.f.x - f.c.| < eps", s: ["A1: for x holds f.x = 2*x + 1", "eps es un real fijo, arbitrario", "A2: 0 < eps", "delta = eps/2", "x es un real fijo, arbitrario"], n: "«Sea x…»" },
+      { l: [11, 12], t: "|.f.x - f.c.| < eps", s: ["A1: for x holds f.x = 2*x + 1", "eps es un real fijo, arbitrario", "A2: 0 < eps", "delta = eps/2", "x es un real fijo, arbitrario", "A3: |.x - c.| < delta"],
+        n: "«…a distancia menor que delta de c». El esqueleto terminó: lo que queda es la cuenta." },
+      { l: [13, 13], t: "|.f.x - f.c.| < eps", s: ["A1: for x holds f.x = 2*x + 1", "eps es un real fijo, arbitrario", "A2: 0 < eps", "delta = eps/2", "x es un real fijo, arbitrario", "A3: |.x - c.| < delta", "f.x = 2*x + 1 & f.c = 2*c + 1"],
+        n: "A1 se usa dos veces, en x y en c. Como la conclusión es una conjunción, cada parte se comprueba por separado y basta un solo paso." },
+      { l: [14, 16], t: "|.f.x - f.c.| < eps", s: ["A1: for x holds f.x = 2*x + 1", "eps es un real fijo, arbitrario", "A2: 0 < eps", "delta = eps/2", "x es un real fijo, arbitrario", "A3: |.x - c.| < delta", "f.x = 2*x + 1 & f.c = 2*c + 1", "|.f.x - f.c.| = 2*|.x - c.|"],
+        n: "Una igualdad iterada. El primer tramo es aritmética; los otros dos sacan el 2 del valor absoluto." },
+      { l: [17, 17], t: "|.f.x - f.c.| < eps", s: ["A1: for x holds f.x = 2*x + 1", "eps es un real fijo, arbitrario", "A2: 0 < eps", "delta = eps/2", "x es un real fijo, arbitrario", "A3: |.x - c.| < delta", "f.x = 2*x + 1 & f.c = 2*c + 1", "|.f.x - f.c.| = 2*|.x - c.|", "|.f.x - f.c.| < 2*delta"],
+        n: "A3 multiplicada por 2, que es positivo (XREAL_1:68), y la igualdad anterior." },
+      { l: [18, 19], t: null, s: ["A1: for x holds f.x = 2*x + 1", "eps es un real fijo, arbitrario", "A2: 0 < eps", "delta = eps/2", "x es un real fijo, arbitrario", "A3: |.x - c.| < delta", "f.x = 2*x + 1 & f.c = 2*c + 1", "|.f.x - f.c.| = 2*|.x - c.|", "|.f.x - f.c.| < 2*delta"],
+        n: "2*delta es eps: eso es aritmética y el verificador lo ve solo." }
+    ]
+  }
+};
+function pintarPasos(caja) {
+  const d = PASOS[caja.dataset.id]; if (!d) return;
+  let k = 0;
+  const cab = el("div", { class: "pasos-cab" }, "<b>" + esc(d.titulo) + '</b><span class="cuenta"></span>');
+  const bAnt = el("button", { type: "button", class: "btn" }, "Anterior");
+  const bSig = el("button", { type: "button", class: "btn pral" }, "Siguiente paso");
+  cab.appendChild(bAnt); cab.appendChild(bSig);
+  const cuerpo = el("div", { class: "pasos-cuerpo" });
+  const cod = el("div", { class: "pasos-cod" });
+  d.cod.forEach(l => cod.appendChild(el("div", null, resaltar(l) || " ")));
+  const est = el("div", { class: "pasos-est" });
+  cuerpo.appendChild(cod); cuerpo.appendChild(est);
+  caja.appendChild(cab); caja.appendChild(cuerpo);
+  function pintar() {
+    const p = d.pasos[k], previo = k > 0 ? d.pasos[k - 1].s : [];
+    $$("div", cod).forEach((x, i) => { x.className = i >= p.l[0] && i <= p.l[1] ? "ahora" : i < p.l[0] ? "visto" : ""; });
+    est.innerHTML = "<h4>Tesis: lo que falta demostrar</h4>" +
+      (p.t ? '<div class="tesis">' + esc(p.t) + "</div>" : '<div class="tesis fin">nada: demostrado</div>') +
+      "<h4>Lo que se sabe</h4><ul>" + (p.s.length ? p.s.map(x => '<li class="' + (previo.indexOf(x) < 0 ? "nuevo" : "") + '">' + esc(x) + "</li>").join("") : "<li>(nada todavía)</li>") + "</ul>" +
+      '<p class="expl">' + esc(p.n) + "</p>";
+    $(".cuenta", cab).textContent = "paso " + (k + 1) + " de " + d.pasos.length;
+    bAnt.disabled = k === 0;
+    bSig.textContent = k === d.pasos.length - 1 ? "Volver al principio" : "Siguiente paso";
+  }
+  bAnt.addEventListener("click", () => { if (k > 0) { k--; pintar(); } });
+  bSig.addEventListener("click", () => { k = k === d.pasos.length - 1 ? 0 : k + 1; pintar(); });
+  pintar();
+}
+
+/* --------------------------------------------------- traductor de fórmulas */
+const TRAD = [
+  ["¬φ ⇔ ¬¬¬φ", "not A iff not not not A"],
+  ["¬(φ ∨ ψ) ⇒ (¬φ ∧ ¬ψ)", "not (A or B) implies not A & not B"],
+  ["(φ ⇒ ψ) ⇒ θ", "(A implies B) implies C"],
+  ["φ ∧ (ψ ∨ θ)", "A & (B or C)"],
+  ["(φ ∧ ψ) ∨ θ ⇔ (φ ∨ θ) ∧ (ψ ∨ θ)", "A & B or C iff (A or C) & (B or C)"]
+];
+function analizar(txt) {
+  const toks = txt.match(/\(|\)|&|[A-Za-z_]+|\S/g) || [];
+  let i = 0;
+  const ver = () => toks[i];
+  function atomo() {
+    const t = toks[i++];
+    if (t === undefined) throw "la fórmula termina antes de tiempo";
+    if (t === "not") return ["not", atomo()];
+    if (t === "(") { const f = formula(); if (toks[i++] !== ")") throw "falta cerrar un paréntesis"; return f; }
+    if (t === "contradiction") return ["c"];
+    if (/^[A-C]$/.test(t)) return ["v", t];
+    if (/^(and|y|o|no|implica|si)$/i.test(t)) throw "«" + t + "» no es Mizar: los conectivos son not, &, or, implies, iff";
+    throw "no se esperaba «" + t + "» (usa las letras A, B, C)";
+  }
+  function conj() { let a = atomo(); while (ver() === "&") { i++; a = ["&", a, atomo()]; } return a; }
+  function disy() { let a = conj(); while (ver() === "or") { i++; a = ["or", a, conj()]; } return a; }
+  function formula() {
+    const a = disy();
+    if (ver() === "implies" || ver() === "iff") {
+      const op = toks[i++], b = disy();
+      if (ver() === "implies" || ver() === "iff") throw "implies e iff no se encadenan sin paréntesis (error *336)";
+      return [op, a, b];
+    }
+    return a;
+  }
+  const f = formula();
+  if (i < toks.length) throw "sobra «" + toks[i] + "»";
+  return f;
+}
+function mostrar(f, tope) {
+  if (f[0] === "v") return f[1];
+  if (f[0] === "c") return "contradiction";
+  const s = f[0] === "not" ? "not " + mostrar(f[1]) : mostrar(f[1]) + " " + f[0] + " " + mostrar(f[2]);
+  return tope ? s : "(" + s + ")";
+}
+function valor(f, v) {
+  switch (f[0]) {
+    case "v": return v[f[1]];
+    case "c": return false;
+    case "not": return !valor(f[1], v);
+    case "&": return valor(f[1], v) && valor(f[2], v);
+    case "or": return valor(f[1], v) || valor(f[2], v);
+    case "implies": return !valor(f[1], v) || valor(f[2], v);
+    default: return valor(f[1], v) === valor(f[2], v);
+  }
+}
+function equivalentes(f, g) {
+  for (let m = 0; m < 8; m++) { const v = { A: !!(m & 1), B: !!(m & 2), C: !!(m & 4) }; if (valor(f, v) !== valor(g, v)) return false; }
+  return true;
+}
+function pintarTrad(caja) {
+  TRAD.forEach((it, n) => {
+    const d = el("div", { class: "trad-item" });
+    d.appendChild(el("div", { class: "formula" }, esc(it[0])));
+    const fila = el("div", { class: "fila" });
+    const inp = el("input", { type: "text", id: "trad-" + n, autocomplete: "off", spellcheck: "false", placeholder: "escribe la fórmula en Mizar", "aria-label": "Traducción de " + it[0] });
+    const b = el("button", { type: "button", class: "btn pral" }, "Comprobar");
+    const b2 = el("button", { type: "button", class: "btn" }, "Ver respuesta");
+    const r = el("div", { class: "resp" }); r.hidden = true;
+    const comprobar = () => {
+      r.hidden = false;
+      if (!inp.value.trim()) { r.className = "resp no"; r.textContent = "Escribe una fórmula."; return; }
+      try {
+        const f = analizar(inp.value), g = analizar(it[1]);
+        const lee = "Mizar lo lee así: <code class=\"l\">" + esc(mostrar(f, true)) + "</code>";
+        if (JSON.stringify(f) === JSON.stringify(g)) { r.className = "resp ok"; r.innerHTML = "Correcto. " + lee; }
+        else if (equivalentes(f, g)) { r.className = "resp no"; r.innerHTML = "Es lógicamente equivalente, pero no es la traducción literal. " + lee; }
+        else { r.className = "resp no"; r.innerHTML = "No dice lo mismo. " + lee + ". Revisa los conectivos y los paréntesis."; }
+      } catch (e) { r.className = "resp no"; r.textContent = "No se puede analizar: " + e + "."; }
+    };
+    b.addEventListener("click", comprobar);
+    inp.addEventListener("keydown", ev => { if (ev.key === "Enter") comprobar(); });
+    b2.addEventListener("click", () => { r.hidden = false; r.className = "resp"; r.innerHTML = "Una respuesta: <code class=\"l\">" + esc(it[1]) + "</code>"; });
+    fila.appendChild(inp); fila.appendChild(b); fila.appendChild(b2);
+    d.appendChild(fila); d.appendChild(r); caja.appendChild(d);
+  });
+}
+
+/* ------------------------------------------------------ tabla de errores */
+function pintarErrores() {
+  const tb = $("#tabla-err tbody");
+  ERRORES.forEach(e => {
+    const tr = el("tr", null, '<td><span class="chip' + (e[0] >= 600 && e[0] < 800 ? " util" : "") + '">*' + e[0] + "</span></td><td>" + e[2] +
+      '<span class="en">' + esc(e[1]) + "</span></td><td>" + e[3] + "</td>");
+    tr.dataset.txt = (e[0] + " " + e[1] + " " + e[2] + " " + e[3]).toLowerCase().replace(/<[^>]+>/g, "");
+    tb.appendChild(tr);
+  });
+  $("#busca-err").addEventListener("input", ev => {
+    const q = ev.target.value.trim().toLowerCase().replace(/^\*/, "");
+    let n = 0;
+    $$("tr", tb).forEach(tr => { const ver = !q || tr.dataset.txt.indexOf(q) >= 0; tr.hidden = !ver; if (ver) n++; });
+    $("#err-vacio").hidden = n > 0;
+  });
+}
+
+/* ------------------------------------------------------------ índice y avance */
+function cuenta(archs) {
+  let tot = 0, he = 0;
+  archs.forEach(a => (DATOS[a] ? DATOS[a].ejercicios : []).forEach(x => { tot++; if (estado.hechos[a + ":" + x.id]) he++; }));
+  return [he, tot];
+}
+function pintarIndice() {
+  const cont = $("#indice-listas");
+  GRUPOS.forEach(g => {
+    cont.appendChild(el("h2", null, g[0]));
+    const ul = el("ul");
+    g[1].forEach(v => ul.appendChild(el("li", null, '<a href="#' + v[0] + '" data-vista="' + v[0] + '"><span class="num">' + v[1] +
+      '</span><span class="tit">' + v[2] + '</span><span class="av"></span></a>')));
+    cont.appendChild(ul);
+  });
+}
+function pintarAvance() {
+  let tot = 0, he = 0;
+  VISTAS.forEach(v => {
+    const c = cuenta(v[3]); tot += c[1]; he += c[0];
+    const s = $('#indice a[data-vista="' + v[0] + '"] .av');
+    if (s && c[1]) { s.textContent = c[0] === c[1] ? "✓" : c[0] + "/" + c[1]; s.classList.toggle("listo", c[0] === c[1]); }
+  });
+  $("#av-texto").textContent = he + " de " + tot + " ejercicios";
+  $("#av-barra").style.width = (tot ? (100 * he) / tot : 0) + "%";
+  $("#movil-av").textContent = he + "/" + tot;
+}
+
+/* ------------------------------------------------------------------ rutas */
+function mostrarVista() {
+  let id = (location.hash || "#inicio").slice(1);
+  if (!document.getElementById("v-" + id)) id = "inicio";
+  $$(".vista").forEach(s => (s.hidden = s.id !== "v-" + id));
+  $$("#indice a[data-vista]").forEach(a => { if (a.dataset.vista === id) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  const i = VISTAS.findIndex(v => v[0] === id), v = VISTAS[i];
+  document.title = (id === "inicio" ? "" : (v[1] ? "Lección " + v[1] + " · " : "") + v[2] + " · ") + "Mizar paso a paso";
+  $("#movil-titulo").textContent = v[1] ? v[1] + ". " + v[2] : v[2];
+  $("#indice").classList.remove("abierto"); $("#btn-menu").setAttribute("aria-expanded", "false");
+  window.scrollTo(0, 0);
+}
+function ponerPies() {
+  VISTAS.forEach((v, i) => {
+    const s = document.getElementById("v-" + v[0]); if (!s) return;
+    const pie = el("nav", { class: "pie", "aria-label": "Lección anterior y siguiente" });
+    const nom = x => (x[1] ? x[1] + ". " : "") + x[2];
+    if (i > 0) pie.appendChild(el("a", { href: "#" + VISTAS[i - 1][0] }, "<small>Anterior</small>" + nom(VISTAS[i - 1])));
+    if (i < VISTAS.length - 1) pie.appendChild(el("a", { href: "#" + VISTAS[i + 1][0], class: "sig" }, "<small>Siguiente</small>" + nom(VISTAS[i + 1])));
+    s.appendChild(pie);
+  });
+}
+
+/* ------------------------------------------------------------------- tema */
+function aplicarTema() {
+  const t = estado.tema;
+  if (t === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", t);
+  $("#btn-tema").textContent = t === "auto" ? "Automático" : t === "light" ? "Claro" : "Oscuro";
+}
+
+/* ------------------------------------------------------------------ inicio */
+$$("pre.miz").forEach(p => { p.dataset.src = p.textContent; p.innerHTML = resaltar(p.textContent); ponerCopiar(p.parentNode); });
+pintarIndice();
+$$(".practica").forEach(pintarPractica);
+$$(".quiz").forEach(pintarQuiz);
+$$(".pasos").forEach(pintarPasos);
+pintarTrad($("#trad"));
+pintarErrores();
+ponerPies();
+pintarAvance();
+aplicarTema();
+mostrarVista();
+window.addEventListener("hashchange", mostrarVista);
+$("#btn-menu").addEventListener("click", () => {
+  const ab = $("#indice").classList.toggle("abierto");
+  $("#btn-menu").setAttribute("aria-expanded", ab ? "true" : "false");
+});
+$("#btn-tema").addEventListener("click", () => {
+  estado.tema = estado.tema === "auto" ? "light" : estado.tema === "light" ? "dark" : "auto"; guardar(); aplicarTema();
+});
+$$("#prep input").forEach(c => {
+  c.checked = !!estado.prep[c.dataset.prep];
+  c.addEventListener("change", () => { estado.prep[c.dataset.prep] = c.checked ? 1 : 0; guardar(); });
+});
+$("#btn-reinicio").addEventListener("click", () => ($("#reinicio-conf").hidden = false));
+$("#btn-reinicio-no").addEventListener("click", () => ($("#reinicio-conf").hidden = true));
+$("#btn-reinicio-si").addEventListener("click", () => {
+  estado.hechos = {}; estado.prep = {}; guardar();
+  $$(".ej input").forEach(c => { c.checked = false; c.closest(".ej").classList.remove("hecho"); });
+  $$("#prep input").forEach(c => (c.checked = false));
+  $("#reinicio-conf").hidden = true; pintarAvance();
+});
+</script>
+</body>
+</html>

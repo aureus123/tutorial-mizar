@@ -1,0 +1,72 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 19: proyecto final (paridad)
+:: ====================================================================
+::  Aquí las demostraciones se escriben enteras. Cada teorema termina,
+::  por ahora, en un punto y coma solitario (que da el error *4):
+::  sustitúyelo por una demostración  proof ... end;
+::  El entorno y la definición ya están; el vocabulario dict/t19_proy.voc
+::  contiene el renglón Vpar.
+
+environ
+
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   INT_1, T19_PROY;
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, INT_1;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, INT_1;
+ registrations ORDINAL1, XREAL_0, INT_1;
+ requirements REAL, NUMERALS, SUBSET, ARITHM;
+ theorems INT_1, XREAL_1;
+
+begin
+
+reserve m,n for Integer;
+
+definition
+  let n be Integer;
+  attr n is par means
+:DefPar:
+  ex k being Integer st n = 2*k;
+end;
+
+:: Un ejemplo resuelto.
+
+theorem
+  6 is par
+proof
+  6 = 2*3;
+  hence thesis by DefPar;
+end;
+
+theorem SumaPar:
+  m is par & n is par implies m + n is par
+:: EJERCICIO 1: La suma de dos pares es par. Esquema: supón las dos
+::   hipótesis; saca de cada una su testigo con consider (por DefPar);
+::   escribe m + n como 2*(algo) y concluye por DefPar.
+;
+
+theorem ProdPar:
+  m is par implies m*n is par
+:: EJERCICIO 2: El producto de un par por cualquier entero es par.
+;
+
+theorem
+  n is par implies n*n is par
+:: EJERCICIO 3: Corolario: basta una justificación simple que cite el teorema
+::   anterior (sustituye el punto y coma por "by ...;").
+;
+
+theorem UnoImpar:
+  not 1 is par
+:: EJERCICIO 4: Desafío. Por absurdo: si 1 = 2*k con k entero, entonces
+::   0 < k (si no, 2*k <= 0) y k < 1 (si no, 2*k >= 2). Pero entre 0 y 1
+::   no hay enteros: INT_1:7 dice "i0 < i1 implies i0 + 1 <= i1".
+::   Teoremas útiles de XREAL_1:  :64 (a <= b & 0 <= c implies a*c <=
+::   b*c)  y  :131 (0 <= a & b <= 0 implies a*b <= 0).
+;
+
+theorem
+  n is par implies not n + 1 is par
+:: EJERCICIO 5: Un número y su siguiente no pueden ser ambos pares. Por
+::   absurdo: si n = 2*i y n + 1 = 2*j, entonces 1 = 2*(j - i), es decir,
+::   1 sería par, contra el teorema UnoImpar.
+;

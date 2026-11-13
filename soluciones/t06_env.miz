@@ -1,0 +1,87 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 6: términos, tipos y el entorno
+:: ====================================================================
+::  Para hablar de números hay que importar símbolos y hechos de la MML.
+::  Cada directiva del entorno importa una cosa distinta:
+::     vocabularies    los símbolos (para el analizador léxico)
+::     notations       la forma de usarlos (qué argumentos llevan)
+::     constructors    su significado
+::     registrations   deducción automática de adjetivos (tipos)
+::     requirements    aritmética incorporada en el verificador
+::     equalities      desplegado automático de definiciones "equals"
+::     theorems        artículos cuyos teoremas se citan con "by"
+::  En este archivo los ejercicios están en el entorno: faltan cosas.
+::  Resuélvelos EN ORDEN, compilando después de cada uno: cada arreglo
+::  hace aparecer el error siguiente.
+
+environ
+
+:: EJERCICIO 1: Falta el vocabulario del símbolo ^2 (y de sqrt). Mizar marca
+::   con *203 la primera palabra que no reconoce. Averigua el vocabulario
+::   con el comando   findvoc -w '^2'   y agrégalo a la lista.
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   ORDINAL1, NAT_1, INT_1, SQUARE_1;
+:: EJERCICIO 2: Ahora Mizar conoce la palabra ^2 pero no sabe usarla: da
+::   errores de formato desconocido. El functor ^2 se define en el
+::   artículo SQUARE_1: agrégalo a notations Y a constructors.
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, NAT_1, INT_1,
+   SQUARE_1;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, NAT_1, INT_1, SQUARE_1;
+:: EJERCICIO 3: Ahora el error es *103 (functor desconocido) en un "+" o en
+::   "sqrt": Mizar no sabe que a^2 es un número real, sólo que es un
+::   "number". El registro (cluster) que lo dice está en SQUARE_1:
+::   agrégalo a registrations.
+ registrations ORDINAL1, XREAL_0, NAT_1, INT_1, SQUARE_1;
+:: EJERCICIO 4: Ya no hay errores de tipos. Los *4 en los cálculos (como
+::   "1 + 1 = 2") se deben a que al verificador le falta saber
+::   aritmética. Agrega el requisito ARITHM.
+ requirements NUMERALS, SUBSET, ARITHM;
+:: EJERCICIO 5: El teorema Binomio sigue con *4. El verificador sabe operar
+::   con polinomios, pero no sabe que x^2 es x*x: es una definición
+::   "equals" del artículo SQUARE_1, y se despliega sola si se pide con
+::   la directiva equalities. Agrega el renglón:   equalities SQUARE_1;
+ equalities SQUARE_1;
+:: EJERCICIO 6: Queda un *203 en "XREAL_1" dentro de una justificación: para
+::   citar teoremas de un artículo hay que nombrarlo en theorems.
+ theorems SQUARE_1, XREAL_1;
+
+begin
+
+reserve a,b for Real;
+reserve n,m for Nat;
+
+:: Un término tiene muchos tipos a la vez. "t is T" es una fórmula que
+:: afirma que el término t tiene el tipo (o el adjetivo) T.
+
+2 is Nat;
+2 is Real;
+2 is natural;
+n is Real;
+n + m is Nat;
+n - m is Integer;
+a * b + n is Real;
+1/2 is Real;
+
+:: "t qua T" es el término t visto con el tipo T; sólo se acepta si t
+:: ya tiene ese tipo (sirve para comprobarlo, o para elegir entre
+:: varias notaciones).
+
+(n qua Real) + a is Real;
+
+:: Con requirements ARITHM el verificador sabe calcular...
+1 + 1 = 2;
+2 * 3 - 10 = -4;
+6/4 = 3/2;
+
+:: ...y comprueba identidades polinómicas sin ayuda.
+
+theorem Binomio:
+  (a + b)^2 = a^2 + 2*a*b + b^2;
+
+:: Lo que no es un cálculo se justifica citando teoremas de la MML.
+
+theorem Raiz:
+  0 <= a implies sqrt(a^2) = a by SQUARE_1:22;
+
+theorem Suma:
+  a <= b implies a + 1 <= b + 1 by XREAL_1:6;

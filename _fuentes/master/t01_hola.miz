@@ -1,0 +1,52 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 1: el primer artículo
+:: ====================================================================
+::  Un artículo tiene dos partes: el entorno (environ), que indica qué se
+::  importa de la biblioteca MML, y el texto, que empieza en "begin".
+::  Este artículo no importa nada: sólo usa lo que Mizar trae de fábrica
+::  (la igualdad, los tipos object y set, y la pertenencia "in").
+
+environ
+
+begin
+
+:: Un enunciado suelto. Mizar lo acepta sin ayuda:
+
+for x being object holds x = x;
+
+::@ej 1 | El enunciado siguiente es falso, y por eso Mizar lo rechaza
+::@ con el error *4. Cambia UN símbolo para que diga: "si x = y entonces
+::@ y = x".
+::@pista El error *4 («This inference is not accepted») significa que el verificador no pudo convencerse de que el enunciado es cierto. Aquí tiene razón: no lo es.
+::@pista El símbolo <code>&lt;&gt;</code> significa «distinto». ¿Qué símbolo debería ir en su lugar?
+::@sol
+for x,y being object st x = y holds y = x;
+::@alt
+for x,y being object st x = y holds y <> x;
+::@fin
+
+:: Un teorema con su demostración. La demostración va entre "proof" y
+:: "end;" y consta de pasos. Aquí hay tres: fijar x e y (let), suponer la
+:: hipótesis (assume) y concluir (thus).
+
+theorem Simetria:
+  for x,y being object st x = y holds y = x
+proof
+  let x,y be object;
+  assume
+A1: x = y;
+  ::@ej 2 | Falta el último paso de la demostración. Escribe en un
+  ::@ renglón:   thus y = x by A1;
+  ::@pista Copia el renglón tal cual, sin olvidar el punto y coma final. <code>thus</code> anuncia «esto es lo que había que demostrar» y <code>by A1</code> indica que se deduce del paso etiquetado <code>A1</code>.
+  ::@sol
+  thus y = x by A1;
+  ::@fin
+end;
+
+::@ej 3 | El renglón siguiente no es Mizar. Compila para ver qué
+::@ opina el verificador y después bórralo.
+::@pista Los errores de sintaxis tienen números mayores que 100 (aquí, *321). Simplemente borra el renglón <code>hola Mizar!</code> y vuelve a compilar.
+::@sol
+::@alt
+hola Mizar!
+::@fin

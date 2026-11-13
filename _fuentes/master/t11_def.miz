@@ -1,0 +1,240 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 11: definiciones
+:: ====================================================================
+::  Se pueden definir cuatro clases de cosas:
+::     func   functores (operaciones):  equals ...  /  means ...
+::     pred   predicados (relaciones):  means ...
+::     attr   atributos (adjetivos):    means ...
+::     mode   modos (tipos):            is ...      /  means ...
+::  En "means", la palabra "it" representa al objeto que se define.
+::  Los símbolos nuevos se declaran en un vocabulario: dict/t11_def.voc
+::  contiene los renglones Omedia, Omitad, Rdivide_a, Vcuadrado y
+::  MDivisor (O = functor, R = predicado, V = atributo, M = modo).
+
+environ
+
+::@ej 1 | Este artículo usa un segundo vocabulario, T11_MIO, que aún
+::@ no existe (error *801 en el entorno). Créalo: un archivo nuevo
+::@ dict/t11_mio.voc con un único renglón:   Odoble
+::@pista El archivo va en la carpeta <code>dict</code> que está junto a <code>text</code>, se llama <code>t11_mio.voc</code> (en minúsculas) y contiene sólo el texto <code>Odoble</code> seguido de un salto de línea. La O inicial indica que <code>doble</code> es un símbolo de functor.
+::@pista Desde una terminal en la carpeta <code>tutorial-mizar</code>: <code>echo Odoble &gt; dict/t11_mio.voc</code>
+::@sol
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   NAT_1, INT_1, SQUARE_1, T11_DEF, T11_SOL;
+::@alt
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   NAT_1, INT_1, SQUARE_1, T11_DEF, T11_MIO;
+::@fin
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, NAT_1, INT_1,
+   SQUARE_1;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, NAT_1, INT_1, SQUARE_1;
+ registrations ORDINAL1, XREAL_0, NAT_1, INT_1, SQUARE_1;
+ requirements REAL, NUMERALS, SUBSET, ARITHM;
+ equalities SQUARE_1;
+ theorems XREAL_1;
+
+begin
+
+reserve a,b,c for Real;
+reserve k,m,n,p for Integer;
+
+:: ------------------------------------------------------------------
+:: 1. Functor definido como abreviatura (equals).
+::    "coherence" es la condición de corrección: el resultado tiene el
+::    tipo anunciado. Aquí Mizar la comprueba solo. "commutativity"
+::    declara una propiedad que el verificador usará sin que se lo pidan.
+:: ------------------------------------------------------------------
+
+definition
+  let a,b be Real;
+  func media(a,b) -> Real equals
+  (a + b)/2;
+  coherence;
+  commutativity;
+end;
+
+theorem
+  media(2,4) = 3;
+
+theorem
+  a <= b implies a <= media(a,b) & media(a,b) <= b
+proof
+  assume a <= b;
+  then a + a <= a + b & a + b <= b + b by XREAL_1:6;
+  then (a + a)/2 <= (a + b)/2 & (a + b)/2 <= (b + b)/2 by XREAL_1:72;
+  hence thesis;
+end;
+
+definition
+  let a be Real;
+  ::@ej 2 | Define el functor "doble" como abreviatura: escribe el
+  ::@ renglón "func doble a -> Real equals" y, debajo, la expresión 2*a
+  ::@ terminada en punto y coma.
+  ::@pista Imita la definición de <code>media</code>: <code>func doble a -&gt; Real equals</code> y en el renglón siguiente <code>2*a;</code>
+  ::@sol
+  func doble a -> Real equals
+  2*a;
+  ::@fin
+  coherence;
+end;
+
+theorem
+  doble 21 = 42;
+
+:: ------------------------------------------------------------------
+:: 2. Functor definido por una propiedad característica (means).
+::    Hay que demostrar que el objeto existe y que es único.
+:: ------------------------------------------------------------------
+
+definition
+  let a be Real;
+  func mitad a -> Real means
+:DefMitad:
+  2*it = a;
+  existence
+  proof
+    ::@ej 3 | La tesis es "ex r being Real st 2*r = a". Demuéstrala en
+    ::@ dos renglones: exhibe el testigo con take y concluye con
+    ::@ "thus thesis;".
+    ::@pista El número cuyo doble es a: <code>take a/2;</code>
+    ::@sol
+    take a/2;
+    thus thesis;
+    ::@fin
+  end;
+  uniqueness;
+end;
+
+:: Un functor "means" no se despliega solo: se usa citando su
+:: definición por la etiqueta (aquí DefMitad).
+
+theorem
+  mitad 6 = 3
+proof
+  2*3 = 6;
+  hence thesis by DefMitad;
+end;
+
+theorem
+  doble (mitad a) = a by DefMitad;
+
+:: ------------------------------------------------------------------
+:: 3. Predicado. "reflexivity" es otra propiedad que se puede declarar
+::    (y que aquí hay que demostrar).
+:: ------------------------------------------------------------------
+
+definition
+  let m,n be Integer;
+  pred m divide_a n means
+:DefDiv:
+  ex k being Integer st n = m*k;
+  reflexivity
+  proof
+    let m be Integer;
+    take 1;
+    thus m = m*1;
+  end;
+end;
+
+theorem
+  3 divide_a 12
+proof
+  12 = 3*4;
+  hence thesis by DefDiv;
+end;
+
+theorem DivTrans:
+  m divide_a n & n divide_a p implies m divide_a p
+proof
+  assume that
+A1: m divide_a n and
+A2: n divide_a p;
+  consider k being Integer such that
+A3: n = m*k by A1,DefDiv;
+  ::@ej 4 | Haz lo mismo con A2: un consider que introduzca un entero l
+  ::@ con la etiqueta A4: "p = n*l". Después escribe el paso
+  ::@ "p = m*(k*l) by A3,A4;".
+  ::@pista <code>consider l being Integer such that</code> y debajo <code>A4: p = n*l by A2,DefDiv;</code>
+  ::@sol
+  consider l being Integer such that
+A4: p = n*l by A2,DefDiv;
+  p = m*(k*l) by A3,A4;
+  ::@fin
+  hence thesis by DefDiv;
+end;
+
+:: ------------------------------------------------------------------
+:: 4. Atributo: un adjetivo que se aplica a los objetos de un tipo.
+:: ------------------------------------------------------------------
+
+definition
+  let n be Nat;
+  attr n is cuadrado means
+:DefCuad:
+  ex m being Nat st n = m^2;
+end;
+
+theorem
+  9 is cuadrado
+proof
+  9 = 3^2;
+  hence thesis by DefCuad;
+end;
+
+theorem
+  for i,j being Nat st i is cuadrado & j is cuadrado holds i*j is cuadrado
+proof
+  let i,j be Nat;
+  assume that
+A1: i is cuadrado and
+A2: j is cuadrado;
+  consider u being Nat such that
+A3: i = u^2 by A1,DefCuad;
+  consider v being Nat such that
+A4: j = v^2 by A2,DefCuad;
+  ::@ej 5 | Termina la demostración en dos renglones: primero la
+  ::@ igualdad "i*j = (u*v)^2" (por A3 y A4) y después "hence thesis by
+  ::@ DefCuad;".
+  ::@pista <code>i*j = (u*v)^2 by A3,A4;</code> — Mizar encuentra solo el testigo u*v, que es un Nat porque el producto de naturales es natural (lo sabe por un registro de NAT_1).
+  ::@sol
+  i*j = (u*v)^2 by A3,A4;
+  hence thesis by DefCuad;
+  ::@fin
+end;
+
+:: ------------------------------------------------------------------
+:: 5. Modo: un tipo nuevo. Como en Mizar los tipos no pueden ser
+::    vacíos, hay que demostrar que existe al menos un objeto del tipo.
+:: ------------------------------------------------------------------
+
+definition
+  let n be Integer;
+  mode Divisor of n -> Integer means
+:DefDivisor:
+  it divide_a n;
+  existence;
+end;
+
+:: (La existencia es automática: n divide_a n por la reflexividad.)
+
+theorem
+  for d being Divisor of n holds d divide_a n*m
+proof
+  let d be Divisor of n;
+A1: d divide_a n by DefDivisor;
+  n divide_a n*m by DefDiv;
+  hence thesis by A1,DivTrans;
+end;
+
+theorem
+  1 is Divisor of n
+proof
+  ::@ej 6 | Demuestra en tres renglones: (1) "n = 1*n;"  (2) "then
+  ::@ 1 divide_a n by DefDiv;"  (3) la conclusión, por DefDivisor.
+  ::@pista El tercer renglón es <code>hence thesis by DefDivisor;</code>
+  ::@sol
+  n = 1*n;
+  then 1 divide_a n by DefDiv;
+  hence thesis by DefDivisor;
+  ::@fin
+end;

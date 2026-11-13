@@ -1,0 +1,20 @@
+# Archivos auxiliares que Mizar genera al compilar (se conservan solo .miz y .voc)
+text/*
+!text/*.miz
+soluciones/*
+!soluciones/*.miz
+
+# Biblioteca local que crea miz2prel (lección 18)
+prel/
+
+# Vocabulario que el estudiante crea en el ejercicio 1 de la lección 11
+dict/t11_mio.voc
+
+# Sistema y editores
+.DS_Store
+__pycache__/
+*.pyc
+.vscode/
+
+# Datos intermedios del generador (se recrean con: python3 _fuentes/build/gen.py)
+_fuentes/build/ejercicios.json

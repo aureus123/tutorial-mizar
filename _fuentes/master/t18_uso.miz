@@ -1,0 +1,69 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 18 (c): usar la biblioteca local
+:: ====================================================================
+::  Este artículo usa el functor "media" y los teoremas del artículo
+::  t18_bib. Antes de compilarlo hay que exportar t18_bib a la biblioteca
+::  local. Desde una terminal situada en la carpeta tutorial-mizar:
+::
+::        miz2prel text/t18_bib
+::
+::  Eso crea la carpeta prel con los archivos t18_bib.*  A partir de
+::  entonces T18_BIB se importa igual que cualquier artículo de la MML.
+
+environ
+
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   T18_BIB;
+::@ej 1 | (Después de ejecutar miz2prel.) El símbolo "media" está en
+::@ el vocabulario, pero falta importar su notación y su significado:
+::@ agrega T18_BIB al final de notations y de constructors.
+::@pista <code>notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, T18_BIB;</code> y lo mismo en <code>constructors</code>.
+::@pista Si aparece un error *803 o *808 («Cannot find ... file») es que falta ejecutar <code>miz2prel text/t18_bib</code> desde la carpeta <code>tutorial-mizar</code>.
+::@sol
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, T18_BIB;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, T18_BIB;
+::@alt
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0;
+::@fin
+ registrations ORDINAL1, XREAL_0;
+ requirements REAL, NUMERALS, SUBSET, ARITHM;
+::@ej 2 | Para que "media(2,6) = 4" se calcule solo, Mizar tiene que
+::@ desplegar la definición (equals) de media. Agrega el renglón
+::@     equalities T18_BIB;
+::@pista Va dentro del entorno, con un espacio delante: <code> equalities T18_BIB;</code>
+::@sol
+ equalities T18_BIB;
+::@fin
+::@ej 3 | Para citar los teoremas de t18_bib, agrega T18_BIB a la
+::@ directiva theorems.
+::@pista <code>theorems XXREAL_0, T18_BIB;</code>
+::@sol
+ theorems XXREAL_0, T18_BIB;
+::@alt
+ theorems XXREAL_0;
+::@fin
+
+begin
+
+reserve a,b,c for Real;
+
+theorem
+  media(2,6) = 4;
+
+theorem
+  media(a,a) = a by T18_BIB:2;
+
+theorem
+  a <= b & b <= c implies media(a,b) <= media(b,c)
+proof
+  assume a <= b & b <= c;
+  ::@ej 4 | Aplica dos veces el primer teorema de t18_bib (se cita como
+  ::@ T18_BIB:1) para obtener, con then:
+  ::@     media(a,b) <= b & b <= media(b,c)
+  ::@pista <code>then media(a,b) &lt;= b &amp; b &lt;= media(b,c) by T18_BIB:1;</code>
+  ::@sol
+  then media(a,b) <= b & b <= media(b,c) by T18_BIB:1;
+  ::@fin
+  hence thesis by XXREAL_0:2;
+end;

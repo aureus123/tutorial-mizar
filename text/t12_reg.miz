@@ -1,0 +1,173 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 12: registros, propiedades y tipos
+:: ====================================================================
+::  Un término tiene un tipo base y un racimo (cluster) de adjetivos.
+::  Los registros enseñan a Mizar a calcular adjetivos por su cuenta:
+::     cluster A for T;         existe un T que es A (permite usar el
+::                              tipo "A T")
+::     cluster A -> B for T;    todo T que es A también es B
+::     cluster t -> A;          el término t es A
+::  Cada registro lleva su demostración (existence o coherence).
+::  Vocabulario dict/t12_reg.voc: Vunitario, Rcerca_de, Rlejos_de.
+
+environ
+
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   COMPLEX1, T12_REG;
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, COMPLEX1;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, COMPLEX1;
+ registrations ORDINAL1, XREAL_0, XXREAL_0;
+ requirements REAL, NUMERALS, SUBSET, ARITHM;
+ theorems XREAL_1, XXREAL_0, COMPLEX1;
+
+begin
+
+:: Un número real es "unitario" si está en el intervalo [0,1], como las
+:: probabilidades.
+
+definition
+  let x be Real;
+  attr x is unitario means
+:DefU:
+  0 <= x & x <= 1;
+end;
+
+:: Registro existencial. Sin él no se puede escribir el tipo "unitario
+:: Real", porque Mizar exige que todos los tipos tengan algún habitante.
+
+registration
+  cluster unitario for Real;
+  existence
+  proof
+    :: EJERCICIO 1: La tesis es "ex x being Real st x is unitario". Exhibe un
+    ::   testigo con take y concluye con "thus thesis by DefU;".
+  end;
+end;
+
+reserve p,q for unitario Real;
+reserve x,y,z for Real;
+
+:: Para usar que p es unitario se cita la definición.
+
+theorem
+  0 <= p & p <= 1 by DefU;
+
+:: Registro condicional: todo real unitario es no negativo.
+
+registration
+  cluster unitario -> non negative for Real;
+  coherence by DefU;
+end;
+
+:: Registros funcionales: el producto de dos unitarios es unitario, y el
+:: complemento 1 - p también.
+
+registration
+  let p,q;
+  cluster p*q -> unitario;
+  coherence
+  proof
+A1: 0 <= p & p <= 1 & 0 <= q & q <= 1 by DefU;
+    then
+A2: 0 <= p*q by XREAL_1:127;
+    p*q <= 1*1 by A1,XREAL_1:66;
+    hence thesis by A2,DefU;
+  end;
+end;
+
+registration
+  let p;
+  cluster 1 - p -> unitario;
+  coherence
+  proof
+A1: 0 <= p & p <= 1 by DefU;
+    :: EJERCICIO 2: Deduce de A1 las dos desigualdades que hacen falta, cada
+    ::   una en un renglón con su etiqueta:
+    ::   A2: 0 <= 1 - p     (por A1 y XREAL_1:48)
+    ::   A3: 1 - p <= 1     (por A1 y XREAL_1:43)
+    thus thesis by A2,A3,DefU;
+  end;
+end;
+
+:: Ahora Mizar calcula solo. Estos teoremas no necesitan demostración:
+:: los adjetivos se deducen combinando los registros.
+
+theorem
+  p*(1 - q) is unitario;
+
+theorem
+  1 - (1 - p)*(1 - q) is unitario;
+
+theorem
+  0 <= p*q*(1 - p) & p*q*(1 - p) <= 1 by DefU;
+
+:: reconsider cambia el tipo de un término; hay que justificar que el
+:: cambio es legítimo. Sirve para "entrar" en un tipo con registros.
+
+theorem
+  0 <= x & x <= 1 & 0 <= y & y <= 1 implies 0 <= x*(1 - y) & x*(1 - y) <= 1
+proof
+  assume
+A1: 0 <= x & x <= 1 & 0 <= y & y <= 1;
+  :: EJERCICIO 3: Convierte x e y en reales unitarios: escribe un reconsider
+  ::   que introduzca p1 = x y q1 = y con el tipo "unitario Real",
+  ::   justificado por A1 y DefU.
+  p1*(1 - q1) is unitario;
+  hence thesis by DefU;
+end;
+
+:: Propiedades de un predicado. Se declaran dentro de la definición, y
+:: desde entonces el verificador las usa sin citarlas.
+
+definition
+  let x,y be Real;
+  pred x cerca_de y means
+:DefCerca:
+  |.x - y.| <= 1;
+  reflexivity
+  proof
+    let x be Real;
+    |.x - x.| = 0 by COMPLEX1:44;
+    hence thesis;
+  end;
+  symmetry
+  proof
+    let x,y be Real;
+    assume |.x - y.| <= 1;
+    :: EJERCICIO 4: La tesis es "|.y - x.| <= 1". Concluye en un renglón con
+    ::   hence, citando el teorema COMPLEX1:60 (|.a - b.| = |.b - a.|).
+  end;
+end;
+
+:: Gracias a "symmetry" esto no necesita justificación:
+
+theorem
+  x cerca_de y implies y cerca_de x;
+
+:: Sinónimos y antónimos: otra forma de escribir lo mismo (o su negación).
+
+notation
+  let x,y be Real;
+  antonym x lejos_de y for x cerca_de y;
+end;
+
+theorem
+  0 lejos_de 5
+proof
+  |.0 - 5.| = |.5 - 0.| by COMPLEX1:60
+    .= 5 by COMPLEX1:43;
+  hence thesis by DefCerca;
+end;
+
+:: La desigualdad triangular: "cerca de" no es transitiva, pero casi.
+
+theorem
+  x cerca_de y & y cerca_de z implies |.x - z.| <= 2
+proof
+  assume x cerca_de y & y cerca_de z;
+  then |.x - y.| <= 1 & |.y - z.| <= 1 by DefCerca;
+  then
+A1: |.x - y.| + |.y - z.| <= 1 + 1 by XREAL_1:7;
+  |.(x - y) + (y - z).| <= |.x - y.| + |.y - z.| by COMPLEX1:56;
+  hence thesis by A1,XXREAL_0:2;
+end;

@@ -1,0 +1,206 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 16: conjuntos por comprensión y cardinales
+:: ====================================================================
+::  El operador de Fraenkel construye conjuntos por comprensión:
+::       { término where variables : condición }
+::  por ejemplo { n where n is Nat : 3 < n }. Las variables deben tener
+::  un tipo cuyos objetos formen un conjunto (Nat, Real, Element of X...;
+::  no vale "set", porque daría lugar a paradojas como la de Russell).
+::  Estar en ese conjunto equivale a "ex n st x = n & condición", y
+::  Mizar hace ese paso solo, en los dos sentidos.
+
+environ
+
+ vocabularies NUMBERS, XBOOLE_0, SUBSET_1, TARSKI, ZFMISC_1, RELAT_1,
+   FUNCT_1, FUNCT_2, CARD_1, FINSET_1, XXREAL_0, ARYTM_1, ARYTM_3, NAT_1;
+ notations TARSKI, XBOOLE_0, ZFMISC_1, SUBSET_1, ORDINAL1, CARD_1, NUMBERS,
+   XCMPLX_0, XREAL_0, XXREAL_0, NAT_1, RELAT_1, FUNCT_1, RELSET_1, FUNCT_2,
+   FINSET_1;
+ constructors XXREAL_0, XREAL_0, XCMPLX_0, NUMBERS, NAT_1, FUNCT_2, RELSET_1,
+   FINSET_1, CARD_1, WELLORD2;
+ registrations XBOOLE_0, SUBSET_1, ORDINAL1, XREAL_0, NAT_1, RELSET_1,
+   FUNCT_2, FINSET_1, CARD_1, XXREAL_0;
+ requirements REAL, NUMERALS, SUBSET, BOOLE, ARITHM;
+ definitions TARSKI;
+ theorems TARSKI, ZFMISC_1, FUNCT_1, FUNCT_2, CARD_1, CARD_2, NAT_1, XREAL_1,
+   XXREAL_0;
+
+begin
+
+reserve x,y,z for object;
+reserve X,Y for set;
+
+:: Entrar y salir de un conjunto definido por comprensión.
+
+theorem
+  5 in {n where n is Nat : 3 < n};
+
+theorem
+  x in {n where n is Nat : 3 < n} implies ex n being Nat st x = n & 3 < n;
+
+theorem
+  not 2 in {n where n is Nat : 3 < n}
+proof
+  assume 2 in {n where n is Nat : 3 < n};
+  then ex n being Nat st 2 = n & 3 < n;
+  hence contradiction;
+end;
+
+:: Ejemplo: la suma de dos números pares es par.
+
+theorem
+  for a,b being object st
+    a in {n where n is Nat : ex k being Nat st n = 2*k} &
+    b in {n where n is Nat : ex k being Nat st n = 2*k}
+  ex c being Nat st c in {n where n is Nat : ex k being Nat st n = 2*k}
+proof
+  let a,b be object;
+  set Pares = {n where n is Nat : ex k being Nat st n = 2*k};
+  assume that
+A1: a in Pares and
+A2: b in Pares;
+  consider n1 being Nat such that
+A3: a = n1 and
+A4: ex k being Nat st n1 = 2*k by A1;
+  consider k1 being Nat such that
+A5: n1 = 2*k1 by A4;
+  ::@ej 1 | Haz con b lo mismo que se hizo con a: un consider que saque
+  ::@ de A2 un natural n2 (con A6: b = n2 y A7: ex k being Nat st n2 =
+  ::@ 2*k) y otro consider que saque de A7 un k2 con A8: n2 = 2*k2.
+  ::@pista Copia los dos consider anteriores cambiando a, n1, k1, A1 por b, n2, k2, A2 y renumerando las etiquetas (A6, A7, A8).
+  ::@pista El segundo: <code>consider k2 being Nat such that</code> / <code>A8: n2 = 2*k2 by A7;</code>
+  ::@sol
+  consider n2 being Nat such that
+A6: b = n2 and
+A7: ex k being Nat st n2 = 2*k by A2;
+  consider k2 being Nat such that
+A8: n2 = 2*k2 by A7;
+  ::@fin
+  take c = n1 + n2;
+  c = 2*(k1 + k2) by A5,A8;
+  hence thesis;
+end;
+
+:: El teorema de Cantor: ninguna función de X en sus partes es
+:: sobreyectiva. La demostración usa el conjunto "diagonal"
+::     D = { x de X : x no pertenece a f(x) }.
+
+theorem Cantor:
+  for X being non empty set, f being Function of X, bool X
+    holds rng f <> bool X
+proof
+  let X be non empty set, f be Function of X, bool X;
+  set D = {x where x is Element of X : not x in f.x};
+A1: D c= X
+  proof
+    let z;
+    assume z in D;
+    then ex x being Element of X st z = x & not x in f.x;
+    hence z in X;
+  end;
+  assume rng f = bool X;
+  then D in rng f by A1,ZFMISC_1:def 1;
+  then consider a being object such that
+A2: a in dom f and
+A3: f.a = D by FUNCT_1:def 3;
+  reconsider a as Element of X by A2;
+  per cases;
+  suppose
+A4:   a in D;
+    ::@ej 2 | Si a está en D, entonces (saliendo del conjunto por
+    ::@ comprensión) a no pertenece a f.a, que es D: contradicción.
+    ::@ Escribe los dos renglones: el "then ex x being Element of X st
+    ::@ ..." y la conclusión "hence contradiction by A3,A4;".
+    ::@pista <code>then ex x being Element of X st a = x &amp; not x in f.x;</code>
+    ::@sol
+    then ex x being Element of X st a = x & not x in f.x;
+    hence contradiction by A3,A4;
+    ::@fin
+  end;
+  suppose
+A5:   not a in D;
+    then not a in f.a by A3;
+    then a in D;
+    hence contradiction by A5;
+  end;
+end;
+
+:: Cardinales de conjuntos finitos. "card A" es un número natural cuando
+:: A es finito, y los hechos básicos están en CARD_1, CARD_2 y NAT_1.
+
+reserve A,B for finite set;
+
+theorem
+  card {x} = 1 by CARD_1:30;
+
+theorem
+  x <> y implies card {x,y} = 2 by CARD_2:57;
+
+theorem
+  A c= B implies card A <= card B by NAT_1:43;
+
+theorem InclExcl:
+  card (A \/ B) = card A + card B - card (A /\ B) by CARD_2:45;
+
+theorem
+  card (A \/ B) <= card A + card B
+proof
+A1: card (A \/ B) = card A + card B - card (A /\ B) by CARD_2:45;
+  ::@ej 3 | Termina en dos renglones: (1) "0 <= card (A /\ B)" porque
+  ::@ es un número natural (NAT_1:2); (2) "hence thesis by A1,XREAL_1:43;"
+  ::@pista <code>0 &lt;= card (A /\ B) by NAT_1:2;</code> — XREAL_1:43 dice <code>0 &lt;= a implies b-a &lt;= b</code>.
+  ::@sol
+  0 <= card (A /\ B) by NAT_1:2;
+  hence thesis by A1,XREAL_1:43;
+  ::@fin
+end;
+
+theorem
+  A misses B implies card (A \/ B) = card A + card B
+proof
+  assume
+A1: A misses B;
+  ::@ej 4 | "A misses B" significa que A y B son disjuntos. Este hecho
+  ::@ está en CARD_2: búscalo con
+  ::@     ./mml.py -g 'misses.*card' CARD_2
+  ::@ y concluye:   thus thesis by A1,CARD_2:(número);
+  ::@pista Es CARD_2:40.
+  ::@sol
+  thus thesis by A1,CARD_2:40;
+  ::@fin
+end;
+
+:: Funciones inyectivas y cardinales: si f: A -> B es inyectiva,
+:: entonces card A <= card B.
+
+theorem Inyeccion:
+  for B being non empty finite set, f being Function of A,B
+    st f is one-to-one holds card A <= card B
+proof
+  let B be non empty finite set, f be Function of A,B;
+  assume f is one-to-one;
+  then
+A1: card dom f = card rng f by CARD_1:70;
+A2: dom f = A by FUNCT_2:def 1;
+  card rng f <= card B by NAT_1:43;
+  hence thesis by A1,A2;
+end;
+
+:: El principio del palomar: si hay más palomas que nidos, alguna
+:: función "paloma -> nido" no puede ser inyectiva.
+
+theorem Palomar:
+  for B being non empty finite set, f being Function of A,B
+    st card B < card A holds not f is one-to-one by Inyeccion;
+
+:: Conjuntos infinitos: X e Y tienen el mismo cardinal si y sólo si hay
+:: una biyección entre ellos ("son equipotentes").
+
+theorem
+  X,Y are_equipotent iff card X = card Y by CARD_1:5;
+
+:: Y la versión de la MML del teorema de Cantor: card X < card bool X
+:: (entre cardinales, "menor" se escribe "in").
+
+theorem
+  card X in card bool X by CARD_1:14;

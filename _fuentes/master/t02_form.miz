@@ -1,0 +1,100 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 2: fórmulas
+:: ====================================================================
+::  Diccionario lógica -> Mizar:
+::     falso           contradiction
+::     no A            not A
+::     A y B           A & B
+::     A o B           A or B
+::     A implica B     A implies B
+::     A si y sólo si B   A iff B
+::     para todo x, A        for x holds A
+::     para todo x con A, B  for x st A holds B
+::     existe x tal que A    ex x st A
+::  Como fórmulas atómicas usamos "x in X" (x pertenece a X).
+
+environ
+
+begin
+
+:: "reserve" fija el tipo de las variables de una vez por todas; así no
+:: hace falta escribir "for x being object" en cada enunciado.
+
+reserve x,y for object;
+reserve X,Y,Z,A,B for set;
+
+:: Todas estas leyes lógicas son aceptadas por Mizar sin demostración.
+:: Las variables libres (x, X, Y) quedan cuantificadas universalmente.
+
+:: Modus ponens
+(x in X implies x in Y) & x in X implies x in Y;
+
+:: Tercero excluido, no contradicción y doble negación
+x in X or not x in X;
+not (x in X & not x in X);
+x in X iff not not x in X;
+
+:: "for x st A holds B" abrevia "for x holds A implies B"
+(for x st x in X holds x in Y) iff (for x holds x in X implies x in Y);
+
+:: No existe ... equivale a para todo ... no
+(not ex x st x in X) iff (for x holds not x in X);
+
+:: Prioridades: not liga más fuerte que &, luego or, luego implies/iff,
+:: y los cuantificadores abarcan todo lo que pueden hacia la derecha.
+:: Las dos fórmulas siguientes son la misma:
+not x in X & x in Y or x in Z implies x in Z or x in Y;
+(((not x in X) & x in Y) or x in Z) implies (x in Z or x in Y);
+
+:: -------------------------------------------------------------------
+:: Los enunciados que siguen están mal copiados y, tal como están, son
+:: falsos: Mizar los rechaza con *4. Corrígelos.
+:: -------------------------------------------------------------------
+
+::@ej 1 | Ley de De Morgan: no (A o B) equivale a (no A) y (no B).
+::@ Corrige el lado derecho.
+::@pista En el lado derecho hay un <code>or</code> que debería ser otro conectivo.
+::@sol
+not (x in X or x in Y) iff not x in X & not x in Y;
+::@alt
+not (x in X or x in Y) iff not x in X or not x in Y;
+::@fin
+
+::@ej 2 | Contrarrecíproca: (A implica B) equivale a (no B implica
+::@ no A). Corrige el lado derecho.
+::@pista Tal como está, el lado derecho es la <em>recíproca</em> disfrazada (no A implica no B), que no equivale a la implicación original. Intercambia los papeles de X e Y.
+::@sol
+(x in X implies x in Y) iff (not x in Y implies not x in X);
+::@alt
+(x in X implies x in Y) iff (not x in X implies not x in Y);
+::@fin
+
+::@ej 3 | Negación de una implicación: no (A implica B) equivale a
+::@ (A y no B). Corrige el lado derecho.
+::@pista Una implicación sólo falla cuando el antecedente es cierto y el consecuente falso.
+::@sol
+not (x in X implies x in Y) iff x in X & not x in Y;
+::@alt
+not (x in X implies x in Y) iff not x in X & x in Y;
+::@fin
+
+::@ej 4 | Negación de un cuantificador universal: "no todo x está
+::@ en X" equivale a "existe un x que no está en X". Corrige el lado
+::@ derecho.
+::@pista El lado derecho debe empezar con <code>ex x st</code>.
+::@sol
+(not for x holds x in X) iff ex x st not x in X;
+::@alt
+(not for x holds x in X) iff for x holds not x in X;
+::@fin
+
+::@ej 5 | Orden de los cuantificadores. De "existe B tal que para
+::@ todo A, A in B" se deduce "para todo A existe B tal que A in B",
+::@ pero no al revés. La implicación está escrita en el sentido
+::@ equivocado: corrígela.
+::@pista Intercambia antecedente y consecuente: <code>(ex B st for A holds A in B) implies for A ex B st A in B</code>.
+::@sol
+(ex B st for A holds A in B) implies for A ex B st A in B;
+::@alt
+(for A ex B st A in B) implies ex B st for A holds A in B;
+::@fin

@@ -1,0 +1,291 @@
+<!-- ===================== LECCIÓN 15 ===================== -->
+<section class="vista" id="v-l15" data-titulo="Inducción y esquemas" hidden>
+<p class="sobre">Lección 15 <span class="man">· Manual, cap. 2, §2.2</span></p>
+<h1>Inducción y esquemas</h1>
+<p class="entrada">La inducción no cabe en la lógica de primer orden: habla de «cualquier propiedad». Mizar la expresa con esquemas, teoremas cuyos parámetros son predicados o funciones.</p>
+
+<h2>Qué es un esquema</h2>
+<p>Un teorema cuantifica sobre objetos. Un <strong>esquema</strong> tiene además parámetros que son predicados, escritos con corchetes (<c>P[…]</c>), o functores, escritos con paréntesis (<c>F(…)</c>). El de inducción es <c>NAT_1:sch 2</c>:</p>
+<miz>
+scheme :: NAT_1:sch 2
+  NatInd { P[Nat] } : for k being Nat holds P[k]
+provided
+ P[0] and
+ for k be Nat st P[k] holds P[k + 1];
+</miz>
+<p>Se lee: para cualquier propiedad <c>P</c> de los naturales, si se cumplen las dos premisas (después de <c>provided</c>), entonces vale la conclusión.</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th></th><th>Teorema</th><th>Esquema</th></tr></thead>
+<tbody>
+<tr><td>Se cita con</td><td><c>by ARTICULO:n</c></td><td><c>from ARTICULO:sch n(premisas)</c></td></tr>
+<tr><td>Se importa con</td><td><c>theorems</c></td><td><c>schemes</c></td></tr>
+<tr><td>Parámetros</td><td>objetos</td><td>además, predicados y functores</td></tr>
+</tbody></table></div>
+
+<h2>Usar la inducción</h2>
+<p>Tres ingredientes: definir el predicado con <c>defpred</c>, demostrar las dos premisas y aplicar el esquema con <c>from</c>. En la definición del predicado, <c>$1</c> representa su argumento.</p>
+<miz>
+theorem Gauss:
+  s.0 = 0 & (for n holds s.(n + 1) = s.n + (n + 1))
+    implies for n holds s.n = n*(n + 1)/2
+proof
+  assume that
+A1: s.0 = 0 and
+A2: for n holds s.(n + 1) = s.n + (n + 1);
+  defpred P[Nat] means s.$1 = $1*($1 + 1)/2;
+A3: P[0] by A1;
+A4: for k st P[k] holds P[k + 1]
+  proof
+    let k;
+    assume P[k];
+    then s.(k + 1) = k*(k + 1)/2 + (k + 1) by A2;
+    hence thesis;
+  end;
+  thus for n holds P[n] from NAT_1:sch 2(A3,A4);
+end;
+</miz>
+<p>Aquí <c>s</c> es una sucesión real (<c>reserve s for Real_Sequence</c>) dada por recurrencia: <em>s</em>(0) = 0 y <em>s</em>(<em>n</em>+1) = <em>s</em>(<em>n</em>) + (<em>n</em>+1), es decir, <em>s</em>(<em>n</em>) = 1 + 2 + … + <em>n</em>. El teorema es la suma de Gauss.</p>
+<div class="nota ojo"><b>Cuidado</b>
+<p>En el paso que lleva <c>from</c>, y en las premisas que se le pasan, el predicado tiene que aparecer <em>escrito como</em> <c>P[…]</c>: Mizar empareja textualmente con el esquema. Por eso A3 dice <c>P[0]</c> y no <c>s.0 = 0*(0 + 1)/2</c>. En todo lo demás, <c>P[k]</c> y su significado son intercambiables: el verificador lo despliega al instante.</p></div>
+<p>La potencia con exponente natural se escribe <c>x |^ n</c>, y sus dos hechos básicos son <c>NEWTON:4</c> (<c>z|^0 = 1</c>) y <c>NEWTON:6</c> (<c>z|^(s+1) = z|^s * z</c>). Con ellos se demuestran por inducción desigualdades como <c>n < 2|^n</c> o la de Bernoulli; están en el archivo de ejercicios.</p>
+
+<h2><c>deffunc</c> y la construcción de objetos</h2>
+<p><c>deffunc</c> es a los functores lo que <c>defpred</c> a los predicados: una fórmula local con nombre. Sirve para los esquemas que <em>construyen</em> funciones. Por ejemplo <c>SEQ_1:sch 1</c> dice que existe la sucesión cuyo término general es una fórmula dada:</p>
+<miz>
+  deffunc F(Nat) = $1*($1 + 1)/2;
+  consider s such that
+A1: for n holds s.n = F(n) from SEQ_1:sch 1;
+</miz>
+<p>Con esto se demuestra que la sucesión de la que habla el teorema de Gauss existe de verdad. Así se definen en Mizar las funciones «por una fórmula»: no hay notación lambda, hay esquemas de existencia.</p>
+
+<h2>Esquemas propios</h2>
+<p>Un esquema se enuncia y se demuestra como un teorema. Los parámetros van entre llaves y las premisas después de <c>provided</c>:</p>
+<miz>
+scheme IndDesde1 { P[Nat] } :
+  for n st 1 <= n holds P[n]
+provided
+A1: P[1] and
+A2: for k st 1 <= k & P[k] holds P[k + 1]
+proof
+  defpred Q[Nat] means 1 <= $1 implies P[$1];
+A3: Q[0];
+A4: for k st Q[k] holds Q[k + 1]
+  proof
+    let k;
+    assume
+A5: Q[k];
+    assume 1 <= k + 1;
+    per cases by NAT_1:14;
+    suppose k = 0;
+      hence P[k + 1] by A1;
+    end;
+    suppose
+A6:   1 <= k;
+      then P[k] by A5;
+      hence P[k + 1] by A2,A6;
+    end;
+  end;
+  for n holds Q[n] from NAT_1:sch 2(A3,A4);
+  hence thesis;
+end;
+</miz>
+<p>Es la inducción que empieza en 1, demostrada a partir de la que empieza en 0. Dentro del mismo artículo el esquema se cita por su nombre: <c>from IndDesde1(A1,A2)</c>.</p>
+
+<div class="practica" data-archivo="t15_ind"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l15a"></div>
+<div class="quiz" data-id="l15b"></div>
+</section>
+
+<!-- ===================== LECCIÓN 16 ===================== -->
+<section class="vista" id="v-l16" data-titulo="Comprensión y cardinales" hidden>
+<p class="sobre">Lección 16 <span class="man">· Manual, cap. 2, §2.1</span></p>
+<h1>Conjuntos por comprensión y cardinales</h1>
+<p class="entrada">El operador de Fraenkel escribe conjuntos «de todos los … tales que …». Con él se demuestra el teorema de Cantor, y de ahí se pasa a contar.</p>
+
+<h2>El operador de Fraenkel</h2>
+<miz>
+{ n where n is Nat : 3 < n }
+{ 2*k where k is Nat : k <= 10 }
+{ x where x is Element of X : not x in f.x }
+</miz>
+<p>La forma general es <c>{ término where variables : condición }</c>. Corresponde al axioma de reemplazo de Fraenkel, la F de ZF. Hay una restricción: los tipos de las variables deben tener como extensión un conjunto (<c>Nat</c>, <c>Real</c>, <c>Element of X</c>…). No vale <c>set</c> ni <c>object</c>, porque entonces se podría escribir el conjunto de Russell <c>{ X where X is set : not X in X }</c>.</p>
+<p>Lo cómodo es que el verificador sabe entrar y salir de estos conjuntos sin que se cite nada:</p>
+<miz>
+theorem
+  5 in {n where n is Nat : 3 < n};
+
+theorem
+  x in {n where n is Nat : 3 < n} implies ex n being Nat st x = n & 3 < n;
+</miz>
+<p><strong>Para entrar</strong> basta exhibir el elemento y que cumpla la condición. <strong>Para salir</strong>, de <c>x in { … }</c> se obtiene un <c>ex</c>, que normalmente se aprovecha con <c>consider</c>. Como estas expresiones son largas, se les da nombre con <c>set</c>:</p>
+<miz>
+  set Pares = {n where n is Nat : ex k being Nat st n = 2*k};
+</miz>
+
+<h2>El teorema de Cantor</h2>
+<p>Ninguna función de <em>X</em> en sus partes es sobreyectiva. La demostración clásica usa el conjunto diagonal <em>D</em> = {<em>x</em> ∈ <em>X</em> : <em>x</em> ∉ <em>f</em>(<em>x</em>)}, que es un Fraenkel:</p>
+<miz>
+theorem Cantor:
+  for X being non empty set, f being Function of X, bool X
+    holds rng f <> bool X
+proof
+  let X be non empty set, f be Function of X, bool X;
+  set D = {x where x is Element of X : not x in f.x};
+A1: D c= X
+  proof
+    let z;
+    assume z in D;
+    then ex x being Element of X st z = x & not x in f.x;
+    hence z in X;
+  end;
+  assume rng f = bool X;
+  then D in rng f by A1,ZFMISC_1:def 1;
+  then consider a being object such that
+A2: a in dom f and
+A3: f.a = D by FUNCT_1:def 3;
+  reconsider a as Element of X by A2;
+  per cases;
+  suppose
+A4:   a in D;
+    then ex x being Element of X st a = x & not x in f.x;
+    hence contradiction by A3,A4;
+  end;
+  suppose
+A5:   not a in D;
+    then not a in f.a by A3;
+    then a in D;
+    hence contradiction by A5;
+  end;
+end;
+</miz>
+<p>Si <em>D</em> fuera <em>f</em>(<em>a</em>) para algún <em>a</em>, entonces <em>a</em> ∈ <em>D</em> si y sólo si <em>a</em> ∉ <em>D</em>. Es la paradoja de Russell de la <a href="#l05">lección 5</a>, ahora con un uso honrado. Fíjate en <c>reconsider a as Element of X</c>: sin nombre nuevo, el propio <c>a</c> cambia de tipo.</p>
+
+<h2>Cardinales finitos</h2>
+<p><c>card A</c> es el cardinal de <c>A</c>. Si <c>A</c> tiene tipo <c>finite set</c>, los registros de la MML hacen que <c>card A</c> sea un número natural, y se puede operar con él.</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Referencia</th><th>Enunciado (A, B finitos)</th></tr></thead>
+<tbody>
+<tr><td><c>CARD_1:30</c></td><td><c>card {x} = 1</c></td></tr>
+<tr><td><c>CARD_2:57</c></td><td><c>x <> y implies card {x,y} = 2</c></td></tr>
+<tr><td><c>NAT_1:43</c></td><td><c>A c= B implies card A <= card B</c></td></tr>
+<tr><td><c>CARD_2:40</c></td><td><c>A misses B implies card (A \/ B) = card A + card B</c></td></tr>
+<tr><td><c>CARD_2:45</c></td><td><c>card (A \/ B) = card A + card B - card (A /\ B)</c></td></tr>
+<tr><td><c>CARD_2:44</c></td><td><c>B c= A implies card (A \ B) = card A - card B</c></td></tr>
+<tr><td><c>CARD_2:46</c></td><td><c>card [:A,B:] = card A * card B</c></td></tr>
+<tr><td><c>CARD_1:70</c></td><td><c>f is one-to-one implies card dom f = card rng f</c></td></tr>
+</tbody></table></div>
+<p><c>A misses B</c> significa que son disjuntos. Con estos hechos sale, por ejemplo, el principio del palomar: si <em>f</em> : <em>A</em> → <em>B</em> y <em>B</em> tiene menos elementos que <em>A</em>, <em>f</em> no es inyectiva.</p>
+<miz>
+theorem Inyeccion:
+  for B being non empty finite set, f being Function of A,B
+    st f is one-to-one holds card A <= card B
+proof
+  let B be non empty finite set, f be Function of A,B;
+  assume f is one-to-one;
+  then
+A1: card dom f = card rng f by CARD_1:70;
+A2: dom f = A by FUNCT_2:def 1;
+  card rng f <= card B by NAT_1:43;
+  hence thesis by A1,A2;
+end;
+
+theorem Palomar:
+  for B being non empty finite set, f being Function of A,B
+    st card B < card A holds not f is one-to-one by Inyeccion;
+</miz>
+<p>Para conjuntos infinitos, tener el mismo cardinal es que exista una biyección: <c>X,Y are_equipotent iff card X = card Y</c> (<c>CARD_1:5</c>). Entre cardinales, «menor» se escribe <c>in</c>, y la versión de la MML del teorema de Cantor es <c>card X in card bool X</c> (<c>CARD_1:14</c>).</p>
+
+<div class="practica" data-archivo="t16_card"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l16a"></div>
+<div class="quiz" data-id="l16b"></div>
+</section>
+
+<!-- ===================== LECCIÓN 17 ===================== -->
+<section class="vista" id="v-l17" data-titulo="Estructuras" hidden>
+<p class="sobre">Lección 17 <span class="man">· Manual, cap. 2, §2.3</span></p>
+<h1>Estructuras</h1>
+<p class="entrada">Un grupo es un conjunto con una operación. Las estructuras permiten tratar ese paquete como un solo objeto, y son lo que da a la MML su sabor abstracto.</p>
+
+<h2>Registros con campos</h2>
+<p>Una <strong>estructura</strong> es un objeto con campos con nombre. La más simple de la MML tiene uno solo, y la de los magmas dos:</p>
+<miz>
+struct 1-sorted (# carrier -> set #);
+
+struct (1-sorted) multMagma
+  (# carrier -> set, multF -> BinOp of the carrier #);
+</miz>
+<p>Los campos van entre <c>(#</c> y <c>#)</c>. Entre paréntesis, antes del nombre, van las estructuras <strong>antepasadas</strong>: <c>multMagma</c> hereda de <c>1-sorted</c>, y todo <c>multMagma</c> se puede usar donde se espera un <c>1-sorted</c>. Un campo se lee con <c>the campo of S</c>:</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Mizar</th><th>Significado</th></tr></thead>
+<tbody>
+<tr><td><c>the carrier of G</c></td><td>el conjunto subyacente de <c>G</c></td></tr>
+<tr><td><c>Element of G</c></td><td>abreviatura de <c>Element of the carrier of G</c></td></tr>
+<tr><td><c>the multF of G</c></td><td>la operación, una función de dos variables</td></tr>
+<tr><td><c>a*b</c></td><td>abreviatura de <c>(the multF of G).(a,b)</c></td></tr>
+<tr><td><c>multMagma(# X, op #)</c></td><td>construye la estructura a partir de sus campos</td></tr>
+</tbody></table></div>
+
+<h2>Los grupos de la MML</h2>
+<p>Un grupo no es una estructura nueva, sino un <c>multMagma</c> con adjetivos:</p>
+<miz>
+mode Group is Group-like associative non empty multMagma;
+</miz>
+<p>Cada adjetivo es un atributo definido en <c>GROUP_1</c>: <c>associative</c> es la asociatividad y <c>Group-like</c> la existencia de neutro e inversos. A partir de ellos se definen el neutro <c>1_G</c> y el inverso <c>a"</c>. Los axiomas se citan así:</p>
+<miz>
+reserve G for Group;
+reserve a,b,c for Element of G;
+
+theorem
+  (a*b)*c = a*(b*c) by GROUP_1:def 3;
+
+theorem
+  a*1_G = a & 1_G*a = a by GROUP_1:def 4;
+
+theorem
+  a*a" = 1_G & a"*a = 1_G by GROUP_1:def 5;
+</miz>
+<p>En un grupo abstracto el verificador no sabe aritmética: no hay <c>ARITHM</c> que valga. Cada reagrupamiento se justifica con la asociatividad, y las cuentas se escriben como igualdades iteradas:</p>
+<miz>
+theorem InvProd:
+  (a*b)" = b"*a"
+proof
+  (a*b)*(b"*a") = a*(b*(b"*a")) by GROUP_1:def 3
+    .= a*((b*b")*a") by GROUP_1:def 3
+    .= a*(1_G*a") by GROUP_1:def 5
+    .= a*a" by GROUP_1:def 4
+    .= 1_G by GROUP_1:def 5;
+  hence thesis by GROUP_1:12;
+end;
+</miz>
+<p><c>GROUP_1:12</c> dice que si <c>h*g = 1_G</c> entonces <c>h = g"</c> y <c>g = h"</c>.</p>
+<div class="nota"><b>Dos estilos</b>
+<p>También se puede demostrar un hecho de grupos sin estructuras: se toma un conjunto <c>G</c>, una <c>BinOp of G</c>, un elemento y una función inverso, y se ponen los axiomas como hipótesis. Es más directo para un teorema suelto. Las estructuras rinden cuando se construye teoría: los adjetivos se acumulan (grupo, grupo conmutativo, anillo, cuerpo…) y los registros y teoremas se heredan.</p></div>
+
+<h2>Una estructura propia</h2>
+<p>Los nombres de estructura y de campo son símbolos de vocabulario (letras <c>G</c> y <c>U</c>).</p>
+<miz>
+definition
+  struct (1-sorted) Punteado (# carrier -> set,
+                               base -> Element of the carrier #);
+end;
+
+theorem
+  ex P being Punteado st the carrier of P = NAT & the base of P = 0
+proof
+  reconsider z = 0 as Element of NAT by ORDINAL1:def 12;
+  take Punteado(# NAT, z #);
+  thus thesis;
+end;
+</miz>
+<p>El campo <c>base</c> tiene un tipo que depende de otro campo. Para construir el objeto, el <c>0</c> debe tener exactamente el tipo <c>Element of NAT</c>: de ahí el <c>reconsider</c>.</p>
+
+<div class="practica" data-archivo="t17_estr"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l17a"></div>
+<div class="quiz" data-id="l17b"></div>
+</section>

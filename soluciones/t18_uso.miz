@@ -1,0 +1,51 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 18 (c): usar la biblioteca local
+:: ====================================================================
+::  Este artículo usa el functor "media" y los teoremas del artículo
+::  t18_bib. Antes de compilarlo hay que exportar t18_bib a la biblioteca
+::  local. Desde una terminal situada en la carpeta tutorial-mizar:
+::
+::        miz2prel text/t18_bib
+::
+::  Eso crea la carpeta prel con los archivos t18_bib.*  A partir de
+::  entonces T18_BIB se importa igual que cualquier artículo de la MML.
+
+environ
+
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   T18_BIB;
+:: EJERCICIO 1: (Después de ejecutar miz2prel.) El símbolo "media" está en
+::   el vocabulario, pero falta importar su notación y su significado:
+::   agrega T18_BIB al final de notations y de constructors.
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, T18_BIB;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, T18_BIB;
+ registrations ORDINAL1, XREAL_0;
+ requirements REAL, NUMERALS, SUBSET, ARITHM;
+:: EJERCICIO 2: Para que "media(2,6) = 4" se calcule solo, Mizar tiene que
+::   desplegar la definición (equals) de media. Agrega el renglón
+::   equalities T18_BIB;
+ equalities T18_BIB;
+:: EJERCICIO 3: Para citar los teoremas de t18_bib, agrega T18_BIB a la
+::   directiva theorems.
+ theorems XXREAL_0, T18_BIB;
+
+begin
+
+reserve a,b,c for Real;
+
+theorem
+  media(2,6) = 4;
+
+theorem
+  media(a,a) = a by T18_BIB:2;
+
+theorem
+  a <= b & b <= c implies media(a,b) <= media(b,c)
+proof
+  assume a <= b & b <= c;
+  :: EJERCICIO 4: Aplica dos veces el primer teorema de t18_bib (se cita como
+  ::   T18_BIB:1) para obtener, con then:
+  ::   media(a,b) <= b & b <= media(b,c)
+  then media(a,b) <= b & b <= media(b,c) by T18_BIB:1;
+  hence thesis by XXREAL_0:2;
+end;

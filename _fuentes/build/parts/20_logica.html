@@ -1,0 +1,351 @@
+<!-- ===================== LECCIÓN 1 ===================== -->
+<section class="vista" id="v-l01" data-titulo="El primer artículo" hidden>
+<p class="sobre">Lección 1 <span class="man">· Manual, paso 2</span></p>
+<h1>El primer artículo</h1>
+<p class="entrada">Un texto en Mizar se llama artículo. Aquí ves de qué partes consta, cómo se compila y cómo se leen los errores.</p>
+
+<h2>Las dos partes de un artículo</h2>
+<p>Un artículo es un archivo de texto con extensión <c>.miz</c>. Su nombre tiene como máximo ocho caracteres (letras, dígitos y guion bajo). El artículo más pequeño que Mizar acepta tiene dos renglones:</p>
+<miz>
+environ
+begin
+</miz>
+<p>Entre <c>environ</c> y <c>begin</c> va el <strong>entorno</strong>: la lista de lo que el artículo importa de la biblioteca. Después de <c>begin</c> va el <strong>texto</strong>: definiciones, teoremas y demostraciones. Por ahora el entorno queda vacío; con eso alcanza para hacer lógica, porque Mizar trae de fábrica la igualdad <c>=</c>, la pertenencia <c>in</c> y los tipos <c>object</c> (cualquier cosa) y <c>set</c> (cualquier conjunto).</p>
+<p>Los comentarios empiezan con <c>::</c> y llegan hasta el final del renglón. Los renglones no pueden pasar de 80 caracteres, una herencia de los años setenta que el verificador todavía exige (error <c>*200</c>).</p>
+
+<h2>Enunciados y teoremas</h2>
+<p>Después de <c>begin</c> se puede escribir un enunciado suelto, terminado en punto y coma. Mizar intenta comprobarlo sin ayuda:</p>
+<miz>
+for x being object holds x = x;
+</miz>
+<p>Si el enunciado merece conservarse, se le antepone <c>theorem</c>. Y si Mizar no puede comprobarlo solo, se le da una demostración entre <c>proof</c> y <c>end;</c>:</p>
+<miz>
+theorem Simetria:
+  for x,y being object st x = y holds y = x
+proof
+  let x,y be object;
+  assume
+A1: x = y;
+  thus y = x by A1;
+end;
+</miz>
+<p>Léelo en voz alta: «para todo <em>x</em>, <em>y</em> tales que <em>x</em> = <em>y</em> se cumple <em>y</em> = <em>x</em>. Demostración: sean <em>x</em>, <em>y</em> objetos; supongamos (A1) que <em>x</em> = <em>y</em>; luego <em>y</em> = <em>x</em>, por A1». Las tres palabras <c>let</c>, <c>assume</c> y <c>thus</c> son el tema de la <a href="#l03">lección 3</a>.</p>
+<div class="nota ojo"><b>Cuidado</b>
+<p>Si el enunciado lleva demostración, <strong>no</strong> se pone punto y coma antes de <c>proof</c>. Un punto y coma ahí le dice a Mizar «compruébalo solo», y lo que sigue ya no se entiende.</p></div>
+
+<h2>Compilar y leer los errores</h2>
+<p><em>Mizar Compile</em> ejecuta dos programas. Primero <c>makeenv</c> lee el entorno y reúne lo importado. Después <c>verifier</c> pasa por tres fases: el <em>Parser</em> comprueba la sintaxis, el <em>Analyzer</em> los tipos y la estructura de las demostraciones, y el <em>Checker</em> la lógica de cada paso.</p>
+<p>Mizar no explica sus errores: da un número y una posición. La extensión muestra el texto asociado al número en el panel <em>Problemas</em>. Hay dos familias que conviene distinguir desde el primer día:</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Error</th><th>Texto original</th><th>Qué significa</th></tr></thead>
+<tbody>
+<tr><td><span class="chip">*4</span></td><td>This inference is not accepted</td><td>El texto está bien escrito, pero el verificador no logró convencerse de ese paso. Falta una justificación, o el enunciado es falso.</td></tr>
+<tr><td><span class="chip">*70</span></td><td>Something remains to be proved</td><td>La demostración terminó (<c>end;</c>) y todavía quedaba algo por demostrar.</td></tr>
+<tr><td><span class="chip">*100</span> en adelante</td><td>(varios)</td><td>Errores de tipos, de símbolos desconocidos o de sintaxis. Hasta que no se arreglan, lo que sigue puede no revisarse.</td></tr>
+</tbody></table></div>
+<p>Un artículo que sólo tiene errores <c>*4</c> está «casi terminado»: lo que falta son justificaciones. En la <a href="#errores">tabla de errores</a> puedes buscar cualquier número.</p>
+
+<div class="practica" data-archivo="t01_hola"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l01a"></div>
+<div class="quiz" data-id="l01b"></div>
+</section>
+
+<!-- ===================== LECCIÓN 2 ===================== -->
+<section class="vista" id="v-l02" data-titulo="Fórmulas" hidden>
+<p class="sobre">Lección 2 <span class="man">· Manual, paso 3 (§1.3.1)</span></p>
+<h1>Fórmulas</h1>
+<p class="entrada">Cómo se escribe la lógica de predicados en Mizar, cómo se agrupan los conectivos y qué leyes lógicas acepta el verificador sin ayuda.</p>
+
+<h2>El diccionario</h2>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Lógica</th><th>Mizar</th><th>Se lee</th></tr></thead>
+<tbody>
+<tr><td class="mat">⊥</td><td><c>contradiction</c></td><td>falso</td></tr>
+<tr><td class="mat">¬φ</td><td><c>not φ</c></td><td>no φ</td></tr>
+<tr><td class="mat">φ ∧ ψ</td><td><c>φ & ψ</c></td><td>φ y ψ</td></tr>
+<tr><td class="mat">φ ∨ ψ</td><td><c>φ or ψ</c></td><td>φ o ψ</td></tr>
+<tr><td class="mat">φ ⇒ ψ</td><td><c>φ implies ψ</c></td><td>φ implica ψ</td></tr>
+<tr><td class="mat">φ ⇔ ψ</td><td><c>φ iff ψ</c></td><td>φ si y sólo si ψ</td></tr>
+<tr><td class="mat">∀x. φ</td><td><c>for x holds φ</c></td><td>para todo x, φ</td></tr>
+<tr><td class="mat">∀x. (φ ⇒ ψ)</td><td><c>for x st φ holds ψ</c></td><td>para todo x tal que φ, ψ</td></tr>
+<tr><td class="mat">∃x. φ</td><td><c>ex x st φ</c></td><td>existe x tal que φ</td></tr>
+</tbody></table></div>
+<p>Mizar es un lenguaje formal con apariencia de inglés, y no admite sinónimos: <c>and</c> no es <c>&</c> (se usa en otro sitio), <c>such that</c> no es <c>st</c>, <c>suppose</c> no es <c>assume</c>. La única excepción es que <c>be</c> y <c>being</c> son intercambiables.</p>
+<p>No hay una constante para «verdadero»; si hace falta se escribe <c>not contradiction</c>.</p>
+
+<h2>Las variables llevan tipo</h2>
+<p>Toda variable ligada por un cuantificador necesita un tipo. Se puede escribir en la fórmula, con <c>being</c>:</p>
+<miz>
+for x being object, X being set holds x in X or not x in X;
+</miz>
+<p>o declararse una vez para todo el artículo con <c>reserve</c>, que es lo habitual:</p>
+<miz>
+reserve x,y for object;
+reserve X,Y,Z for set;
+
+for x,X holds x in X or not x in X;
+</miz>
+<p><c>reserve</c> no crea variables: sólo establece que, de ahí en adelante, una <c>x</c> sin tipo es un <c>object</c>. Además, las variables reservadas que quedan libres en un enunciado se cuantifican universalmente de forma automática. El enunciado anterior puede escribirse simplemente <c>x in X or not x in X;</c>.</p>
+<p>Como fórmulas atómicas, en estas primeras lecciones usamos <c>x in X</c> («<em>x</em> pertenece a <em>X</em>»), <c>x = y</c> y <c>x <> y</c> («distinto»).</p>
+
+<h2>Prioridades</h2>
+<p>De más fuerte a más débil: <c>not</c>, <c>&</c>, <c>or</c>, y por último <c>implies</c> e <c>iff</c>. Los cuantificadores abarcan todo lo que pueden hacia la derecha.</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Se escribe</th><th>Mizar entiende</th></tr></thead>
+<tbody>
+<tr><td><c>not A & B</c></td><td><c>(not A) & B</c></td></tr>
+<tr><td><c>A or B & C</c></td><td><c>A or (B & C)</c></td></tr>
+<tr><td><c>A & B implies C or D</c></td><td><c>(A & B) implies (C or D)</c></td></tr>
+<tr><td><c>ex x st A implies B</c></td><td><c>ex x st (A implies B)</c></td></tr>
+<tr><td><c>A implies B implies C</c></td><td>Error <span class="chip">*336</span>: <c>implies</c> e <c>iff</c> no se encadenan; hay que poner paréntesis.</td></tr>
+</tbody></table></div>
+
+<h3>Practica aquí mismo</h3>
+<p>Traduce cada fórmula a Mizar usando las letras <c>A</c>, <c>B</c>, <c>C</c> en lugar de φ, ψ, θ. La página analiza lo que escribes con las prioridades de Mizar y te muestra cómo lo agrupa.</p>
+<div class="trad" id="trad"></div>
+
+<h2>Lo que el verificador sabe de lógica</h2>
+<p>El verificador acepta sin justificación cualquier tautología proposicional, y también las equivalencias entre cuantificadores y negación. Por dentro reduce todas las fórmulas a una forma normal que sólo usa <c>not</c>, <c>&</c> y <c>for</c>; dos fórmulas con la misma forma normal son para él la misma fórmula. Por ejemplo:</p>
+<miz>
+(x in X implies x in Y) & x in X implies x in Y;        :: modus ponens
+(not ex x st x in X) iff (for x holds not x in X);
+(for x st x in X holds x in Y) iff (for x holds x in X implies x in Y);
+</miz>
+<p>Lo que no hace es adivinar: ante un enunciado falso responde <c>*4</c>, igual que ante uno cierto que no sabe demostrar.</p>
+
+<div class="practica" data-archivo="t02_form"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l02a"></div>
+<div class="quiz" data-id="l02b"></div>
+</section>
+
+<!-- ===================== LECCIÓN 3 ===================== -->
+<section class="vista" id="v-l03" data-titulo="El esqueleto de una demostración" hidden>
+<p class="sobre">Lección 3 <span class="man">· Manual, paso 6 (§1.6.1)</span></p>
+<h1>El esqueleto de una demostración</h1>
+<p class="entrada">Una demostración avanza transformando lo que falta demostrar. La forma de la fórmula dicta cuál es el paso siguiente.</p>
+
+<h2>La tesis</h2>
+<p>En cada punto de una demostración hay una fórmula pendiente: la <strong>tesis</strong>. Al empezar es el enunciado completo. Ciertos pasos, los <strong>pasos de esqueleto</strong>, la van reduciendo, y la demostración termina cuando no queda nada. Si se llega a <c>end;</c> con algo pendiente, Mizar da <c>*70</c>.</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Si la tesis es…</th><th>el paso es…</th><th>y la tesis pasa a ser…</th></tr></thead>
+<tbody>
+<tr><td><c>φ implies ψ</c></td><td><c>assume φ;</c></td><td><c>ψ</c></td></tr>
+<tr><td><c>φ & ψ</c></td><td><c>thus φ;</c></td><td><c>ψ</c></td></tr>
+<tr><td><c>for x being T holds ψ</c></td><td><c>let x be T;</c></td><td><c>ψ</c></td></tr>
+<tr><td><c>ex x being T st ψ</c></td><td><c>take t;</c></td><td><c>ψ</c> con <c>t</c> en lugar de <c>x</c></td></tr>
+<tr><td>cualquier <c>φ</c></td><td><c>thus φ;</c></td><td>nada: demostración terminada</td></tr>
+</tbody></table></div>
+<p>Es la deducción natural de un curso de lógica: <c>assume</c> introduce la implicación, <c>let</c> el cuantificador universal, <c>take</c> el existencial y <c>thus</c> la conjunción.</p>
+
+<h3>Míralo funcionar</h3>
+<p>Avanza paso a paso y observa cómo cambian la tesis y lo que se sabe.</p>
+<div class="pasos" data-id="esq1"></div>
+
+<h2>Etiquetas y <c>by</c></h2>
+<p>Lo que se supone con <c>assume</c> no queda disponible «en el aire»: para usarlo hay que citarlo. Por eso se le pone una <strong>etiqueta</strong> (por costumbre <c>A1</c>, <c>A2</c>, … al comienzo del renglón) y se la nombra después de <c>by</c>:</p>
+<miz>
+theorem Socrates:
+  (for x st x in Hombres holds x in Mortales) & s in Hombres
+    implies s in Mortales
+proof
+  assume
+A1: for x st x in Hombres holds x in Mortales;
+  assume
+A2: s in Hombres;
+  thus s in Mortales by A1,A2;
+end;
+</miz>
+<p>La hipótesis era una conjunción y se supuso en dos partes. También se puede hacer de una vez con <c>assume that … and …;</c> (ese <c>and</c> separa hipótesis; no es el conectivo <c>&</c>):</p>
+<miz>
+  assume that
+A1: for x st x in Hombres holds x in Mortales and
+A2: s in Hombres;
+</miz>
+<div class="nota"><b>Variables libres</b>
+<p>El teorema <c>Socrates</c> habla de <c>s</c>, <c>Hombres</c> y <c>Mortales</c> sin cuantificarlos. Son variables reservadas, así que el enunciado vale «para todos». Dentro de la demostración se comportan como objetos fijos: no hace falta un <c>let</c>.</p></div>
+
+<h2>El orden importa</h2>
+<p>Para una tesis <c>φ & ψ</c> hay que demostrar primero <c>φ</c> y después <c>ψ</c>, en ese orden. Un <c>thus</c> que no coincide con el comienzo de la tesis da <span class="chip">*51</span> <em>Invalid conclusion</em>; un <c>let</c> cuando la tesis no empieza por <c>for</c> da <span class="chip">*55</span> <em>Invalid generalization</em>; un <c>assume</c> que no coincide con el antecedente da <span class="chip">*52</span> <em>Invalid assumption</em>.</p>
+<p>Con <c>take</c>, el testigo puede ser cualquier término: una variable ya introducida, una constante o una expresión.</p>
+
+<div class="practica" data-archivo="t03_esq"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l03a"></div>
+<div class="quiz" data-id="l03b"></div>
+</section>
+
+<!-- ===================== LECCIÓN 4 ===================== -->
+<section class="vista" id="v-l04" data-titulo="Justificaciones" hidden>
+<p class="sobre">Lección 4 <span class="man">· Manual, paso 7 (§1.7.1 y §1.7.3)</span></p>
+<h1>Justificaciones</h1>
+<p class="entrada">Cada paso debe seguirse de algo. Aquí están las tres formas de decir de qué, las palabras que ahorran etiquetas y los límites de lo que el verificador deduce solo.</p>
+
+<h2>Tres formas de justificar</h2>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Forma</th><th>Significado</th></tr></thead>
+<tbody>
+<tr><td><c>enunciado;</c></td><td>Justificación vacía: «compruébalo solo».</td></tr>
+<tr><td><c>enunciado by A1,A2,TEOREMA:7;</c></td><td>Se deduce de los pasos y teoremas citados.</td></tr>
+<tr><td><c>enunciado proof … end;</c></td><td>Con una subdemostración, que tiene su propia tesis.</td></tr>
+</tbody></table></div>
+<p>La mayor parte de una demostración son enunciados intermedios, uno tras otro, cada uno consecuencia de algunos de los anteriores. No cambian la tesis: sólo agregan cosas sabidas.</p>
+
+<h2><c>then</c> y <c>hence</c></h2>
+<p>Lo más frecuente es que un paso se apoye en el inmediatamente anterior. En vez de etiquetarlo se escribe <c>then</c> delante del nuevo paso:</p>
+<miz>
+  s in Y by A1,A3;
+  then s in Z by A2;       :: "por el paso anterior y por A2"
+</miz>
+<p>Cuando el paso que usa al anterior es además una conclusión (<c>thus</c>), no se escribe <c>then thus</c> sino <c>hence</c>:</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Suma</th><th>Se escribe</th></tr></thead>
+<tbody>
+<tr><td><c>then</c> + <c>thus</c></td><td><c>hence</c></td></tr>
+<tr><td><c>thus</c> + <c>now</c></td><td><c>hereby</c></td></tr>
+</tbody></table></div>
+<p>La frase <c>hence thesis;</c> («de donde se sigue lo que había que demostrar») cierra buena parte de las demostraciones de la MML. <c>thesis</c> es una palabra reservada que representa la tesis actual; ahorra copiarla.</p>
+<miz>
+theorem
+  (for x holds x in X implies x in Y) & (for x holds x in Y implies x in Z)
+    & s in X implies s in Z
+proof
+  assume that
+A1: for x holds x in X implies x in Y and
+A2: for x holds x in Y implies x in Z and
+A3: s in X;
+  s in Y by A1,A3;
+  hence s in Z by A2;
+end;
+</miz>
+
+<h2>Subdemostraciones</h2>
+<p>Un paso intermedio que no sale con un <c>by</c> lleva su propia demostración. Las demostraciones se anidan como los bloques de un programa:</p>
+<miz>
+A4: for x holds x in Y
+  proof
+    let x;
+    x in X by A3;
+    hence thesis by A1;      :: aquí thesis es "x in Y"
+  end;
+</miz>
+<p>Con <c>now … end;</c> se hace lo mismo sin escribir el enunciado: Mizar lo reconstruye a partir de los pasos de esqueleto del bloque. Este bloque equivale al anterior (sin la etiqueta):</p>
+<miz>
+  now
+    let x;
+    x in X by A3;
+    hence x in Y by A1;
+  end;
+</miz>
+<p>Dentro de un <c>now</c> no se puede usar <c>thesis</c>, porque no hay una tesis escrita.</p>
+
+<h2>Si y sólo si</h2>
+<p>Para Mizar <c>φ iff ψ</c> es <c>(φ implies ψ) & (ψ implies φ)</c>: una conjunción de dos implicaciones. La primera se demuestra dentro de un bloque <c>hereby … end;</c> (que es <c>thus</c> + <c>now</c>) y la segunda a continuación:</p>
+<miz>
+theorem
+  (for x holds x in X & x in Y) iff
+    (for x holds x in X) & (for x holds x in Y)
+proof
+  hereby
+    assume
+A1: for x holds x in X & x in Y;
+    thus for x holds x in X by A1;
+    thus for x holds x in Y by A1;
+  end;
+  assume
+A2: (for x holds x in X) & (for x holds x in Y);
+  let x;
+  thus x in X & x in Y by A2;
+end;
+</miz>
+
+<h2>Qué hace <c>by</c>, y qué no</h2>
+<p><c>by</c> es un demostrador automático deliberadamente débil: acepta lo que una persona llamaría «un paso obvio». A grandes rasgos:</p>
+<ul class="t">
+<li>Domina la lógica proposicional y las igualdades (si <c>a = b</c>, puede sustituir uno por otro).</li>
+<li>Usa las premisas universales (<c>for …</c>) particularizándolas, pero en cada paso puede particularizar <strong>una sola</strong>. Si hay que encadenar tres, hacen falta pasos intermedios.</li>
+<li>Si la conclusión es una conjunción, comprueba cada parte por separado. Por eso un paso fallido puede dar varios <c>*4</c> en la misma posición.</li>
+<li>No busca teoremas en la biblioteca: sólo usa lo que se le cita.</li>
+</ul>
+<p>La consecuencia práctica: cuando aparece un <c>*4</c> y el paso es cierto, la solución suele ser partirlo en dos más pequeños.</p>
+
+<div class="practica" data-archivo="t04_just"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l04a"></div>
+<div class="quiz" data-id="l04b"></div>
+</section>
+
+<!-- ===================== LECCIÓN 5 ===================== -->
+<section class="vista" id="v-l05" data-titulo="Usar lo que se sabe" hidden>
+<p class="sobre">Lección 5 <span class="man">· Manual, §1.6.2 y §1.7.3</span></p>
+<h1>Usar lo que se sabe: consider, per cases y el absurdo</h1>
+<p class="entrada">Los pasos de esqueleto sirven para demostrar un «existe» o un «o». Para aprovechar uno que ya se tiene hacen falta otras dos construcciones.</p>
+
+<h2><c>consider</c>: dar nombre a lo que existe</h2>
+<p>Si se sabe <c>ex x st φ</c>, el paso <c>consider</c> introduce un objeto con nombre que cumple <c>φ</c>. Es el «sea <em>a</em> uno de esos elementos» de las demostraciones informales.</p>
+<miz>
+theorem
+  (ex x st x in X) & (for x st x in X holds x in Y) implies ex x st x in Y
+proof
+  assume that
+A1: ex x st x in X and
+A2: for x st x in X holds x in Y;
+  consider a being object such that
+A3: a in X by A1;
+  take a;
+  thus a in Y by A2,A3;
+end;
+</miz>
+<p>El <c>consider</c> es un paso como cualquier otro y necesita justificación: aquí <c>by A1</c>, que es donde está el «existe». Después de <c>such that</c> pueden ir varias propiedades separadas por <c>and</c>, cada una con su etiqueta. Fíjate en que aquí sí se escribe <c>such that</c> completo, mientras que en las fórmulas se escribe <c>st</c>.</p>
+
+<h2><c>per cases</c>: razonar por casos</h2>
+<p>Si se sabe <c>φ or ψ</c>, se demuestra la tesis una vez suponiendo <c>φ</c> y otra suponiendo <c>ψ</c>:</p>
+<miz>
+  per cases by A1;          :: A1: x in X or x in Y
+  suppose x in X;
+    hence x in Z by A2;
+  end;
+  suppose x in Y;
+    hence x in Z by A3;
+  end;
+</miz>
+<p>El <c>per cases</c> se justifica con el paso que asegura que los casos cubren todas las posibilidades. Si los casos son <c>φ</c> y <c>not φ</c> no hace falta justificar nada: <c>per cases;</c>. Cada caso empieza con <c>suppose</c> (no <c>assume</c>), tiene como tesis la misma que había antes y se cierra con su propio <c>end;</c>. Si a un caso le queda algo pendiente, el error es <span class="chip">*60</span>.</p>
+
+<h2>Reducción al absurdo</h2>
+<p>No hay una construcción especial para el absurdo. Como el verificador identifica las fórmulas con la misma forma normal, una tesis <c>φ</c> es para él lo mismo que <c>not φ implies contradiction</c>. Así que simplemente se supone lo contrario y se llega a <c>contradiction</c>:</p>
+<miz>
+theorem Russell:
+  not ex R being set st for x being set holds x in R iff not x in x
+proof
+  assume ex R being set st for x being set holds x in R iff not x in x;
+  then consider R being set such that
+A1: for x being set holds x in R iff not x in x;
+  R in R iff not R in R by A1;
+  hence contradiction;
+end;
+</miz>
+<p>Es la paradoja de Russell: no existe el conjunto de todos los conjuntos que no se pertenecen a sí mismos. La demostración particulariza A1 en el propio <c>R</c> y obtiene una fórmula imposible. Otros dos usos del mismo mecanismo:</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Tesis</th><th>Se puede empezar con</th><th>y queda por demostrar</th></tr></thead>
+<tbody>
+<tr><td><c>φ</c></td><td><c>assume not φ;</c></td><td><c>contradiction</c></td></tr>
+<tr><td><c>not φ</c></td><td><c>assume φ;</c></td><td><c>contradiction</c></td></tr>
+<tr><td><c>φ or ψ</c></td><td><c>assume not φ;</c></td><td><c>ψ</c></td></tr>
+</tbody></table></div>
+<p>De una contradicción se deduce cualquier cosa: si los pasos citados se contradicen, <c>by</c> acepta cualquier conclusión.</p>
+
+<h3>Todo junto: el principio del bebedor</h3>
+<p>«En todo bar hay alguien tal que, si él bebe, todos beben.» Suena paradójico y es un teorema de la lógica clásica. La demostración usa casos, <c>consider</c>, <c>take</c> y una contradicción.</p>
+<div class="pasos" data-id="bebedor"></div>
+
+<div class="practica" data-archivo="t05_elim"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l05a"></div>
+<div class="quiz" data-id="l05b"></div>
+</section>

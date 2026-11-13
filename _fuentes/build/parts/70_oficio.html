@@ -1,0 +1,259 @@
+<!-- ===================== LECCIÓN 18 ===================== -->
+<section class="vista" id="v-l18" data-titulo="Limpieza y biblioteca local" hidden>
+<p class="sobre">Lección 18 <span class="man">· Manual, pasos 8 y 9</span></p>
+<h1>Limpieza y biblioteca local</h1>
+<p class="entrada">Que un artículo compile no significa que esté terminado. Mizar trae utilidades que señalan lo que sobra, y un mecanismo para usar tus artículos desde otros.</p>
+
+<h2>Las utilidades de limpieza</h2>
+<p>Cuando una demostración por fin compila suele quedar con restos: referencias que no hacían falta, pasos que se pueden saltar, etiquetas que nadie cita. Cada utilidad busca una clase de sobrante y lo marca como si fuera un error, con un número propio. En VS Code están en la paleta de comandos (<kbd>⇧⌘P</kbd>) y en el desplegable del botón ▷.</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Comando en VS Code</th><th>Programa</th><th>Señala</th><th>Marca</th></tr></thead>
+<tbody>
+<tr><td>Irrelevant Premises</td><td><c>relprem</c></td><td>Referencias de un <c>by</c>, y <c>then</c>, que no hacen falta.</td><td><span class="chip util">*602</span> <span class="chip util">*603</span></td></tr>
+<tr><td>Irrelevant Inferences</td><td><c>relinfer</c></td><td>Pasos intermedios que se pueden saltar, citando directamente aquello en lo que se apoyaban.</td><td><span class="chip util">*604</span> <span class="chip util">*605</span></td></tr>
+<tr><td>Irrelevant Iterative Steps</td><td><c>reliters</c></td><td>Términos de una igualdad iterada que se pueden quitar.</td><td><span class="chip util">*746</span></td></tr>
+<tr><td>Trivial Proofs</td><td><c>trivdemo</c></td><td>Subdemostraciones que caben en un solo <c>by</c>.</td><td><span class="chip util">*607</span></td></tr>
+<tr><td>Irrelevant Label</td><td><c>chklab</c></td><td>Etiquetas que nadie cita.</td><td><span class="chip util">*601</span></td></tr>
+<tr><td>Inaccessible Items</td><td><c>inacc</c></td><td>Pasos que no se usan para nada.</td><td><span class="chip util">*610</span> <span class="chip util">*611</span></td></tr>
+<tr><td>Irrelevant Vocabularies</td><td><c>irrvoc</c></td><td>Vocabularios del entorno que no se usan.</td><td><span class="chip util">*709</span></td></tr>
+<tr><td>Irrelevant Theorems</td><td><c>irrths</c></td><td>Artículos de <c>theorems</c> de los que no se cita nada.</td><td><span class="chip util">*706</span></td></tr>
+</tbody></table></div>
+<p>Unas dependen de otras: <c>inacc</c> sólo ve un paso como inútil cuando ya no tiene etiqueta, así que conviene pasar antes <c>chklab</c>. Un orden razonable es <em>relprem → chklab → inacc → relinfer → reliters → trivdemo</em>, y al final el entorno con <em>irrvoc</em> e <em>irrths</em>. Después de limpiar, compila otra vez para comprobar que no se rompió nada.</p>
+<div class="nota ojo"><b>Con criterio</b>
+<p><c>relinfer</c> acorta las demostraciones a costa de quitar pasos que una persona quizá quiera leer. El manual lo advierte: no rompe nada, pero puede dejar la demostración fea. Una demostración se escribe también para quien la lee.</p></div>
+<p>Desde la terminal, cada utilidad se ejecuta con <c>revf</c>, que además escribe las marcas dentro del archivo: <c>revf relprem text/t18_limp</c>.</p>
+
+<div class="practica" data-archivo="t18_limp"></div>
+
+<h2>La biblioteca local</h2>
+<p>Para citar desde un artículo lo demostrado en otro tuyo, el primero tiene que <strong>exportarse</strong>. El programa <c>miz2prel</c> extrae de un artículo lo que otros necesitan (notaciones, constructores, registros, definiciones, teoremas, esquemas) y lo guarda en la carpeta <c>prel</c>, junto a <c>text</c> y <c>dict</c>:</p>
+<miz>
+miz2prel text/t18_bib
+</miz>
+<p>Se ejecuta desde la carpeta <c>tutorial-mizar</c>. A partir de ahí <c>T18_BIB</c> se importa en las directivas del entorno igual que un artículo de la MML, con dos detalles:</p>
+<ul class="t">
+<li>Los teoremas se citan <strong>por número de orden</strong>: <c>T18_BIB:1</c>, <c>T18_BIB:2</c>… y las definiciones <c>T18_BIB:def 1</c>… Las etiquetas (<c>Th1</c>, <c>DefX</c>) sólo valen dentro del artículo.</li>
+<li>Sólo se exporta lo que lleva <c>theorem</c>. Los lemas quedan privados.</li>
+</ul>
+<p>Si cambias el artículo exportado, hay que volver a ejecutar <c>miz2prel</c>.</p>
+
+<div class="practica" data-archivo="t18_bib"></div>
+<div class="practica" data-archivo="t18_uso"></div>
+
+<h2>Enviar a la MML</h2>
+<p>El último paso del manual es enviar el artículo a la biblioteca. Dos condiciones: que la matemática no esté ya formalizada en la MML, y que el artículo tenga cierta entidad (como referencia, unas mil líneas). A cambio, el grupo de Mizar lo mantiene compatible con las versiones futuras, otros pueden construir sobre él y se publica una versión generada automáticamente en la revista <em>Formalized Mathematics</em>. Las instrucciones están en <a href="https://mizar.uwb.edu.pl/">mizar.uwb.edu.pl</a>.</p>
+<p>La biblioteca local sirve para unos pocos artículos; no está pensada para crecer.</p>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l18a"></div>
+<div class="quiz" data-id="l18b"></div>
+</section>
+
+<!-- ===================== LECCIÓN 19 ===================== -->
+<section class="vista" id="v-l19" data-titulo="Proyecto final" hidden>
+<p class="sobre">Lección 19 <span class="man">· Manual, los nueve pasos</span></p>
+<h1>Proyecto final: paridad</h1>
+<p class="entrada">Hasta aquí completaste renglones. Ahora escribes demostraciones enteras, y repasas el método con el que se encara un artículo propio.</p>
+
+<h2>El método, de principio a fin</h2>
+<ol class="t">
+<li><strong>La matemática.</strong> Escribe la demostración en papel con todo detalle antes de abrir el editor. El manual lo dice sin rodeos: lo que se explica en cinco minutos lleva una semana de formalización, así que cada mejora previa a la matemática se paga sola.</li>
+<li><strong>El artículo vacío.</strong> <c>environ</c> y <c>begin</c>, en un archivo de nombre corto dentro de <c>text</c>. Copia el entorno de un artículo parecido.</li>
+<li><strong>El enunciado.</strong> Escríbelo y compila. Todavía no hay demostración.</li>
+<li><strong>El entorno.</strong> Ajústalo hasta que el único error sea <c>*4</c>. Es el primer hito: los símbolos y los tipos están bien.</li>
+<li><strong>Definiciones y lemas.</strong> Lo que haga falta para enunciar y para demostrar, también sin demostración.</li>
+<li><strong>El esqueleto.</strong> <c>let</c>, <c>assume</c>, <c>take</c>, <c>thus</c>, <c>consider</c>, <c>per cases</c> y los pasos intermedios, sin justificar. Compila: sólo deben quedar <c>*4</c>.</li>
+<li><strong>Las justificaciones.</strong> Elimina los <c>*4</c> uno por uno: con <c>then</c>, con etiquetas, con teoremas de la MML, o partiendo el paso en dos.</li>
+<li><strong>La limpieza.</strong> Las utilidades de la <a href="#l18">lección 18</a>.</li>
+<li><strong>La biblioteca.</strong> <c>miz2prel</c>, o el envío a la MML.</li>
+</ol>
+<p>El consejo más útil está en los pasos 4 y 6: <strong>mantén el artículo siempre en estado «sólo <c>*4</c>»</strong>. Escribe los pasos sin justificar y deja que el verificador te diga cuáles no acepta. Un <c>*4</c> es una tarea pendiente; cualquier otro error es algo roto.</p>
+
+<h2>El proyecto</h2>
+<p>El archivo define «par» para los enteros y enuncia cinco teoremas. El entorno, la definición y un ejemplo ya están:</p>
+<miz>
+definition
+  let n be Integer;
+  attr n is par means
+:DefPar:
+  ex k being Integer st n = 2*k;
+end;
+
+theorem
+  6 is par
+proof
+  6 = 2*3;
+  hence thesis by DefPar;
+end;
+</miz>
+<p>Cada teorema termina, por ahora, en un punto y coma solitario, que es la forma de decir «compruébalo solo» y por eso da <c>*4</c>. Tu trabajo es sustituir cada uno por su demostración. Los tres primeros siguen el patrón de la <a href="#l11">lección 11</a> (sacar testigos con <c>consider</c>, hacer la cuenta, volver a entrar por la definición). El cuarto, que 1 no es par, necesita una idea sobre los enteros: no hay ninguno estrictamente entre 0 y 1. El quinto usa el cuarto como lema.</p>
+
+<div class="practica" data-archivo="t19_proy"></div>
+
+<h2>Y después</h2>
+<p>Algunas ideas para seguir, de menor a mayor dificultad. Para cada una, crea un archivo nuevo en <c>text</c> partiendo del entorno de la lección más parecida.</p>
+<ul class="t">
+<li>La composición de dos funciones estrictamente crecientes es estrictamente creciente (<a href="#l13">lección 13</a>).</li>
+<li>El producto de dos funciones continuas en un punto es continuo en ese punto (<a href="#l14">lección 14</a>).</li>
+<li>1² + 2² + … + <em>n</em>² = <em>n</em>(<em>n</em>+1)(2<em>n</em>+1)/6, con una sucesión dada por recurrencia (<a href="#l15">lección 15</a>).</li>
+<li>El límite de una función en un punto, si existe, es único (<a href="#l14">lección 14</a>).</li>
+<li>Define «impar» y demuestra que todo entero es par o impar. Necesitarás inducción o la división entera de <c>INT_1</c>.</li>
+<li>El ejemplo del manual de Wiedijk: las ternas pitagóricas. En la MML es el artículo <c>PYTHTRIP</c>; el código fuente está en <c>$MIZFILES/mml/pythtrip.miz</c>.</li>
+</ul>
+<p>Leer artículos de la MML es la mejor escuela. Empieza por los resúmenes (<c>$MIZFILES/abstr</c>), que sólo tienen los enunciados, y baja al código fuente (<c>$MIZFILES/mml</c>) cuando quieras ver cómo se demostró algo.</p>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l19a"></div>
+</section>
+
+<!-- ===================== CHULETA ===================== -->
+<section class="vista" id="v-chuleta" data-titulo="Chuleta" hidden>
+<p class="sobre">Referencia</p>
+<h1>Chuleta</h1>
+<p class="entrada">Lo esencial en una página, para tener a la vista mientras escribes.</p>
+
+<h2>Fórmulas</h2>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Lógica</th><th>Mizar</th><th>Lógica</th><th>Mizar</th></tr></thead>
+<tbody>
+<tr><td class="mat">¬φ</td><td><c>not φ</c></td><td class="mat">∀x. φ</td><td><c>for x holds φ</c></td></tr>
+<tr><td class="mat">φ ∧ ψ</td><td><c>φ & ψ</c></td><td class="mat">∀x. (φ ⇒ ψ)</td><td><c>for x st φ holds ψ</c></td></tr>
+<tr><td class="mat">φ ∨ ψ</td><td><c>φ or ψ</c></td><td class="mat">∃x. φ</td><td><c>ex x st φ</c></td></tr>
+<tr><td class="mat">φ ⇒ ψ</td><td><c>φ implies ψ</c></td><td class="mat">⊥</td><td><c>contradiction</c></td></tr>
+<tr><td class="mat">φ ⇔ ψ</td><td><c>φ iff ψ</c></td><td class="mat">x ≠ y</td><td><c>x <> y</c></td></tr>
+</tbody></table></div>
+<p>Prioridad, de mayor a menor: <c>not</c>, <c>&</c>, <c>or</c>, <c>implies</c>/<c>iff</c>, cuantificadores.</p>
+
+<h2>Demostrar (según la forma de la tesis)</h2>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Tesis</th><th>Paso</th><th>Queda</th></tr></thead>
+<tbody>
+<tr><td><c>φ implies ψ</c></td><td><c>assume φ;</c></td><td><c>ψ</c></td></tr>
+<tr><td><c>φ & ψ</c></td><td><c>thus φ;</c></td><td><c>ψ</c></td></tr>
+<tr><td><c>for x being T holds φ</c></td><td><c>let x be T;</c></td><td><c>φ</c></td></tr>
+<tr><td><c>ex x being T st φ</c></td><td><c>take t;</c></td><td><c>φ</c> con <c>t</c></td></tr>
+<tr><td><c>φ iff ψ</c></td><td><c>hereby assume φ; … thus ψ; end;</c></td><td><c>ψ implies φ</c></td></tr>
+<tr><td><c>φ</c> (por absurdo)</td><td><c>assume not φ;</c></td><td><c>contradiction</c></td></tr>
+<tr><td><c>φ or ψ</c></td><td><c>assume not φ;</c></td><td><c>ψ</c></td></tr>
+<tr><td><c>X c= Y</c></td><td><c>let x be object; assume x in X;</c></td><td><c>x in Y</c> (con <c>definitions TARSKI</c>)</td></tr>
+<tr><td><c>X = Y</c> (conjuntos)</td><td><c>thus X c= Y;</c></td><td><c>Y c= X</c> (con <c>definitions XBOOLE_0</c>)</td></tr>
+</tbody></table></div>
+
+<h2>Usar (según la forma de lo que se sabe)</h2>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Se sabe</th><th>Paso</th></tr></thead>
+<tbody>
+<tr><td><c>ex x st φ</c></td><td><c>consider a being T such that A1: φ by …;</c></td></tr>
+<tr><td><c>φ or ψ</c></td><td><c>per cases by …; suppose φ; … end; suppose ψ; … end;</c></td></tr>
+<tr><td><c>for x holds φ</c></td><td>se cita con <c>by</c>; el verificador lo particulariza (una premisa universal por paso)</td></tr>
+<tr><td><c>φ & ψ</c>, <c>φ implies ψ</c>, <c>φ iff ψ</c></td><td>se cita con <c>by</c></td></tr>
+<tr><td>un predicado o atributo definido</td><td>se cita su definición: <c>by A1,DefX;</c> o <c>by A1,ARTICULO:def n;</c></td></tr>
+</tbody></table></div>
+
+<h2>Justificar y enlazar</h2>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Escrito</th><th>Significado</th></tr></thead>
+<tbody>
+<tr><td><c>φ;</c></td><td>el verificador lo comprueba solo</td></tr>
+<tr><td><c>φ by A1,XREAL_1:6;</c></td><td>se sigue de un paso etiquetado y de un teorema de la MML</td></tr>
+<tr><td><c>then φ;</c></td><td>se sigue del paso anterior</td></tr>
+<tr><td><c>hence φ;</c></td><td><c>then</c> + <c>thus</c></td></tr>
+<tr><td><c>φ proof … end;</c></td><td>con subdemostración</td></tr>
+<tr><td><c>now … end;</c></td><td>subdemostración sin enunciado</td></tr>
+<tr><td><c>a = b by … .= c by … .= d;</c></td><td>igualdad iterada</td></tr>
+<tr><td><c>φ from NAT_1:sch 2(A1,A2);</c></td><td>por un esquema</td></tr>
+<tr><td><c>set s = t;</c></td><td>abreviatura local</td></tr>
+<tr><td><c>reconsider s = t as T by …;</c></td><td>el mismo objeto con otro tipo</td></tr>
+<tr><td><c>defpred P[Nat] means …$1…;</c></td><td>predicado local</td></tr>
+<tr><td><c>deffunc F(Nat) = …$1…;</c></td><td>functor local</td></tr>
+</tbody></table></div>
+
+<h2>Entornos para copiar</h2>
+<h3>Lógica pura</h3>
+<miz>
+environ
+begin
+</miz>
+<h3>Números reales (igualdades, desigualdades, raíces, valor absoluto)</h3>
+<miz>
+environ
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   SQUARE_1, COMPLEX1;
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, COMPLEX1,
+   SQUARE_1;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, COMPLEX1, SQUARE_1;
+ registrations ORDINAL1, XREAL_0, SQUARE_1;
+ requirements REAL, NUMERALS, SUBSET, ARITHM;
+ equalities SQUARE_1;
+ theorems XCMPLX_1, XREAL_1, XXREAL_0, SQUARE_1, COMPLEX1;
+begin
+</miz>
+<h3>Conjuntos</h3>
+<miz>
+environ
+ vocabularies XBOOLE_0, TARSKI, ZFMISC_1;
+ notations TARSKI, XBOOLE_0, ZFMISC_1;
+ constructors TARSKI, XBOOLE_0, ZFMISC_1;
+ registrations XBOOLE_0;
+ requirements BOOLE;
+ definitions TARSKI, XBOOLE_0;
+ theorems TARSKI, XBOOLE_0, XBOOLE_1, ZFMISC_1;
+begin
+</miz>
+<h3>Funciones de ℝ en ℝ</h3>
+<miz>
+environ
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, FUNCT_1, COMPLEX1,
+   XXREAL_0, CARD_1, REAL_1, PARTFUN1, SUBSET_1, VALUED_1, FUNCT_2;
+ notations TARSKI, XBOOLE_0, SUBSET_1, ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0,
+   XXREAL_0, COMPLEX1, RELAT_1, FUNCT_1, RELSET_1, PARTFUN1, FUNCT_2,
+   VALUED_0, VALUED_1;
+ constructors REAL_1, COMPLEX1, VALUED_1, PARTFUN1, FUNCT_2, RELSET_1;
+ registrations XBOOLE_0, XREAL_0, MEMBERED, NUMBERS, RELSET_1, VALUED_0,
+   VALUED_1, FUNCT_2, XXREAL_0;
+ requirements REAL, NUMERALS, SUBSET, BOOLE, ARITHM;
+ theorems XXREAL_0, XREAL_0, XREAL_1, COMPLEX1, VALUED_1, FUNCT_2;
+begin
+</miz>
+<p>Los entornos de inducción, cardinales y grupos están en los archivos de las lecciones <a href="#l15">15</a>, <a href="#l16">16</a> y <a href="#l17">17</a>.</p>
+
+<h2>Teoremas de uso diario</h2>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Referencia</th><th>Enunciado</th></tr></thead>
+<tbody>
+<tr><td><c>XXREAL_0:1</c></td><td><c>a <= b & b <= a implies a = b</c></td></tr>
+<tr><td><c>XXREAL_0:2</c></td><td><c>a <= b & b <= c implies a <= c</c></td></tr>
+<tr><td><c>XREAL_1:6</c></td><td><c>a <= b iff a + c <= b + c</c></td></tr>
+<tr><td><c>XREAL_1:7</c>, <c>:8</c></td><td><c>a <= b & c <= d implies a+c <= b+d</c> (y con <c><</c>)</td></tr>
+<tr><td><c>XREAL_1:29</c></td><td><c>0 < a implies b < b+a</c></td></tr>
+<tr><td><c>XREAL_1:48</c>, <c>:49</c></td><td><c>a <= b implies 0 <= b-a</c>; <c>a < b implies a-b < 0</c></td></tr>
+<tr><td><c>XREAL_1:63</c></td><td><c>0 <= a*a</c></td></tr>
+<tr><td><c>XREAL_1:64</c>, <c>:68</c></td><td><c>a <= b & 0 <= c implies a*c <= b*c</c>; <c>0 < c & a < b implies a*c < b*c</c></td></tr>
+<tr><td><c>XREAL_1:72</c>, <c>:74</c></td><td>lo mismo dividiendo por <c>c</c></td></tr>
+<tr><td><c>XREAL_1:127</c>, <c>:129</c></td><td>producto de no negativos (de positivos)</td></tr>
+<tr><td><c>XREAL_1:215</c>, <c>:216</c></td><td><c>0 < a implies 0 < a/2</c>; <c>0 < a implies a/2 < a</c></td></tr>
+<tr><td><c>XCMPLX_1:6</c></td><td><c>a*b = 0 implies a = 0 or b = 0</c></td></tr>
+<tr><td><c>XCMPLX_1:87</c>, <c>:89</c></td><td><c>b <> 0 implies a/b*b = a</c>; <c>b <> 0 implies a = a*b/b</c></td></tr>
+<tr><td><c>COMPLEX1:56</c>, <c>:65</c></td><td>desigualdad triangular; <c>|.a*b.| = |.a.|*|.b.|</c></td></tr>
+<tr><td><c>COMPLEX1:43</c>, <c>:46</c>, <c>:60</c></td><td><c>a >= 0 implies |.a.| = a</c>; <c>0 <= |.a.|</c>; <c>|.a-b.| = |.b-a.|</c></td></tr>
+<tr><td><c>NAT_1:2</c>, <c>:13</c></td><td><c>0 <= n</c>; <c>i < j + 1 iff i <= j</c></td></tr>
+<tr><td><c>INT_1:7</c></td><td><c>i0 < i1 implies i0 + 1 <= i1</c> (enteros)</td></tr>
+<tr><td><c>NEWTON:4</c>, <c>:6</c></td><td><c>z|^0 = 1</c>; <c>z|^(s+1) = z|^s * z</c></td></tr>
+<tr><td><c>XREAL_0:def 1</c></td><td><c>r is real</c> significa <c>r in REAL</c></td></tr>
+<tr><td><c>FUNCT_2:15</c></td><td><c>(g*f).x = g.(f.x)</c> si <c>x in X</c></td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ===================== ERRORES ===================== -->
+<section class="vista" id="v-errores" data-titulo="Errores" hidden>
+<p class="sobre">Referencia</p>
+<h1>Errores frecuentes</h1>
+<p class="entrada">Mizar da un número y una posición. Aquí están los que vas a encontrar en el tutorial, con lo que suelen significar y qué hacer.</p>
+<input type="search" class="buscador" id="busca-err" placeholder="Busca por número (por ejemplo 70) o por palabra" aria-label="Buscar error">
+<div class="tabla-caja"><table class="tabla" id="tabla-err">
+<thead><tr><th>Error</th><th>Mensaje y significado</th><th>Qué hacer</th></tr></thead>
+<tbody></tbody></table></div>
+<p id="err-vacio" hidden>Ningún error de la lista coincide. El texto de todos los errores está en <c>$MIZFILES/mizar.msg</c>.</p>
+<h2>Cómo leer la posición</h2>
+<p>El error se marca donde el verificador se dio cuenta, que suele ser el final de lo que no pudo aceptar: un <c>*4</c> aparece en el punto y coma (o en el <c>by</c>) del paso rechazado; un <c>*70</c>, en el <c>end;</c> de la demostración incompleta. Un error de sintaxis puede arrastrar otros detrás: arregla siempre el primero y vuelve a compilar.</p>
+</section>

@@ -1,0 +1,296 @@
+<!-- ===================== LECCIÓN 6 ===================== -->
+<section class="vista" id="v-l06" data-titulo="Términos, tipos y entorno" hidden>
+<p class="sobre">Lección 6 <span class="man">· Manual, pasos 3 y 4 (§1.3.2–1.4)</span></p>
+<h1>Términos, tipos y entorno</h1>
+<p class="entrada">Para hablar de números hay que importarlos. Esta lección explica cómo se escriben términos y tipos y qué hace cada renglón del entorno, que es la parte más ingrata de Mizar.</p>
+
+<h2>Términos y relaciones</h2>
+<p>En Mizar no hay diferencia sintáctica entre «notación de función» y «notación de operador»: todo son símbolos con argumentos a la izquierda y a la derecha. <c>x + y</c>, <c>sqrt x</c>, <c>x^2</c> (el símbolo es <c>^2</c>, con el 2 incluido) y <c>|.x.|</c> (valor absoluto, un símbolo de dos partes) son términos formados con <strong>functores</strong>, que es como Mizar llama a los símbolos de operación.</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Matemática</th><th>Mizar</th><th>Matemática</th><th>Mizar</th></tr></thead>
+<tbody>
+<tr><td class="mat">x + y, x − y, −x</td><td><c>x + y</c>, <c>x - y</c>, <c>-x</c></td><td class="mat">x ≤ y, x &lt; y</td><td><c>x <= y</c>, <c>x < y</c></td></tr>
+<tr><td class="mat">x·y, x/y</td><td><c>x*y</c>, <c>x/y</c></td><td class="mat">x ≠ y</td><td><c>x <> y</c></td></tr>
+<tr><td class="mat">x², √x</td><td><c>x^2</c>, <c>sqrt x</c></td><td class="mat">x ∈ X</td><td><c>x in X</c></td></tr>
+<tr><td class="mat">xⁿ</td><td><c>x |^ n</c></td><td class="mat">X ⊆ Y</td><td><c>X c= Y</c></td></tr>
+<tr><td class="mat">|x|</td><td><c>|.x.|</c></td><td class="mat">ℕ, ℤ, ℝ</td><td><c>NAT</c>, <c>INT</c>, <c>REAL</c></td></tr>
+<tr><td class="mat">mín(x, y)</td><td><c>min(x,y)</c></td><td class="mat">f(x)</td><td><c>f.x</c></td></tr>
+</tbody></table></div>
+<p>Las fórmulas atómicas se forman con <strong>predicados</strong> (<c>=</c>, <c><=</c>, <c>in</c>, <c>c=</c>…) o con la palabra <c>is</c>, que afirma que un término tiene un tipo o un adjetivo: <c>n is Nat</c>, <c>x is positive</c>.</p>
+
+<h2>Tipos: modos y atributos</h2>
+<p>Los objetos de Mizar son conjuntos sin tipo, pero los <em>términos</em> sí tienen tipo. Un tipo se compone de un <strong>modo</strong> precedido de adjetivos:</p>
+<miz>
+non empty finite Subset of NAT
+</miz>
+<p>Aquí el modo es <c>Subset of NAT</c> (los modos pueden llevar argumentos, después de <c>of</c>) y los adjetivos son <c>non empty</c> y <c>finite</c>. Los adjetivos se forman con <strong>atributos</strong> (<c>empty</c>, <c>finite</c>, <c>even</c>, <c>positive</c>, <c>real</c>…), posiblemente negados con <c>non</c>.</p>
+<p>Hay tres maneras de decir «natural» y conviene no confundirlas:</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Escrito</th><th>Qué es</th><th>Dónde se usa</th></tr></thead>
+<tbody>
+<tr><td><c>NAT</c></td><td>un término: el conjunto ℕ</td><td>en fórmulas: <c>n in NAT</c></td></tr>
+<tr><td><c>Nat</c></td><td>un modo (tipo)</td><td>en declaraciones: <c>let n be Nat</c>, <c>reserve n for Nat</c></td></tr>
+<tr><td><c>natural</c></td><td>un atributo (adjetivo)</td><td>en tipos y con <c>is</c>: <c>natural Number</c>, <c>n is natural</c></td></tr>
+</tbody></table></div>
+<p>Lo mismo ocurre con <c>REAL</c>, <c>Real</c>, <c>real</c> y con <c>INT</c>, <c>Integer</c>, <c>integer</c>. Un mismo término tiene muchos tipos a la vez: <c>2</c> es <c>Nat</c>, <c>Integer</c>, <c>Real</c>, <c>set</c>… Que Mizar lo sepa depende del entorno.</p>
+
+<h2>El entorno, renglón por renglón</h2>
+<miz>
+environ
+ vocabularies NUMBERS, ARYTM_1, ARYTM_3, RELAT_1, REAL_1, XXREAL_0, CARD_1,
+   SQUARE_1;
+ notations ORDINAL1, NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, SQUARE_1;
+ constructors NUMBERS, XCMPLX_0, XREAL_0, XXREAL_0, SQUARE_1;
+ registrations ORDINAL1, XREAL_0, SQUARE_1;
+ requirements REAL, NUMERALS, SUBSET, ARITHM;
+ equalities SQUARE_1;
+ theorems XCMPLX_1, XREAL_1, SQUARE_1;
+</miz>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Directiva</th><th>Qué importa</th><th>Si falta…</th></tr></thead>
+<tbody>
+<tr><td><c>vocabularies</c></td><td>Los símbolos, para el análisis léxico. Son nombres de vocabularios, que no siempre coinciden con el artículo que define el símbolo.</td><td><span class="chip">*203</span> token desconocido</td></tr>
+<tr><td><c>notations</c></td><td>La forma de usar cada símbolo: cuántos argumentos y de qué tipo. Son nombres de artículos, y el orden importa: gana la última notación que encaja.</td><td><span class="chip">*165</span> <span class="chip">*151</span> formato desconocido</td></tr>
+<tr><td><c>constructors</c></td><td>El significado de esas notaciones. Suele ser casi la misma lista que <c>notations</c>.</td><td><span class="chip">*103</span> <span class="chip">*830</span></td></tr>
+<tr><td><c>registrations</c></td><td>Reglas para deducir adjetivos automáticamente («todo natural es real», «la suma de naturales es natural»).</td><td><span class="chip">*103</span> functor desconocido, o <span class="chip">*4</span></td></tr>
+<tr><td><c>requirements</c></td><td>Conocimiento incorporado en el verificador. <c>NUMERALS</c> y <c>SUBSET</c>: los numerales son números. <c>ARITHM</c>: sabe operar. <c>REAL</c>: sabe comparar numerales. <c>BOOLE</c>: sabe del conjunto vacío.</td><td><span class="chip">*4</span> en cuentas triviales</td></tr>
+<tr><td><c>equalities</c></td><td>Despliegue automático de functores definidos con <c>equals</c> (por ejemplo <c>x^2 = x*x</c>).</td><td><span class="chip">*4</span></td></tr>
+<tr><td><c>definitions</c>, <c>expansions</c></td><td>Despliegue de definiciones <c>means</c> en la tesis y en las inferencias (<a href="#l10">lección 10</a>).</td><td><span class="chip">*55</span> <span class="chip">*51</span> o <span class="chip">*4</span></td></tr>
+<tr><td><c>theorems</c>, <c>schemes</c></td><td>Los artículos cuyos teoremas o esquemas se citan en las justificaciones.</td><td><span class="chip">*203</span> en la referencia</td></tr>
+</tbody></table></div>
+<p>En la práctica nadie escribe un entorno desde cero: se copia el de un artículo parecido y se ajusta. Los artículos de este tutorial ya traen el suyo; cuando escribas los tuyos, parte de uno de ellos. Aun así, cuando algo falla hay que saber diagnosticarlo.</p>
+
+<h3>Cómo averiguar qué falta</h3>
+<ul class="t">
+<li><strong>El vocabulario de un símbolo:</strong> en la terminal, <c>findvoc -w '^2'</c> responde <c>vocabulary: SQUARE_1</c> y <c>O^2</c>. La letra inicial dice qué clase de símbolo es: <c>O</c> functor, <c>R</c> predicado, <c>M</c> modo, <c>V</c> atributo, <c>K</c> y <c>L</c> paréntesis izquierdo y derecho, <c>G</c> estructura, <c>U</c> campo de estructura.</li>
+<li><strong>El artículo que lo define:</strong> busca la definición en los resúmenes de la MML, por ejemplo <c>./mml.py -g 'func sqrt' SQUARE_1</c>, o directamente en <c>$MIZFILES/abstr/*.abs</c>. En VS Code, pasar el ratón sobre una referencia como <c>SQUARE_1:22</c> muestra el teorema, y <em>Ir a la definición</em> abre el resumen.</li>
+<li><strong>Un error de tipos persistente</strong> (<c>*103</c> donde el functor claramente existe) casi siempre es un registro que falta. Piensa: ¿qué adjetivo necesita ese argumento y quién se lo da?</li>
+</ul>
+<div class="nota"><b>Curiosidades del vocabulario</b>
+<p>Por razones históricas los símbolos están repartidos de forma poco intuitiva: <c>+</c> y <c><</c> están en <c>ARYTM_3</c>, <c>-</c> en <c>ARYTM_1</c>, <c>*</c> en <c>RELAT_1</c>, <c>Real</c> en <c>REAL_1</c> y el numeral <c>0</c> es un functor del vocabulario <c>CARD_1</c>. <c>findvoc</c> lo resuelve.</p></div>
+
+<h2><c>is</c> y <c>qua</c></h2>
+<p>Para comprobar si Mizar le reconoce un tipo a un término, escribe el enunciado <c>t is T;</c> y compila. Si da <c>*4</c>, no lo sabe (falta un registro o un requisito). La expresión <c>(t qua T)</c> es el término <c>t</c> «visto como» <c>T</c>, y sólo se acepta si <c>t</c> ya tiene ese tipo; si no, da <span class="chip">*116</span>.</p>
+<miz>
+reserve a,b for Real;
+reserve n,m for Nat;
+
+2 is Nat;
+n + m is Nat;            :: por un registro de NAT_1
+n - m is Integer;        :: por un registro de INT_1
+(n qua Real) + a is Real;
+</miz>
+
+<div class="practica" data-archivo="t06_env"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l06a"></div>
+<div class="quiz" data-id="l06b"></div>
+<div class="quiz" data-id="l06c"></div>
+</section>
+
+<!-- ===================== LECCIÓN 7 ===================== -->
+<section class="vista" id="v-l07" data-titulo="Igualdades" hidden>
+<p class="sobre">Lección 7 <span class="man">· Manual, §1.6.4 y §1.7.2</span></p>
+<h1>Igualdades</h1>
+<p class="entrada">Qué cuentas hace el verificador por su cuenta, cuáles hay que justificar y cómo se escribe una cadena de igualdades.</p>
+
+<h2>Lo que es automático</h2>
+<p>Con <c>requirements ARITHM</c> el verificador reduce los dos miembros de una igualdad a una forma normal de polinomio. Por eso las identidades algebraicas no necesitan justificación, por largas que sean:</p>
+<miz>
+theorem
+  (a + b + c)^2 = a^2 + b^2 + c^2 + 2*a*b + 2*a*c + 2*b*c;
+</miz>
+<p>También usa solo las hipótesis que son igualdades: sustituye, y resuelve sistemas lineales.</p>
+<miz>
+theorem
+  x = y + 1 implies x^2 - y^2 = 2*y + 1;
+
+theorem
+  a + b = 5 & a - b = 1 implies a = 3 & b = 2;
+</miz>
+<p>(Que <c>x^2</c> sea <c>x*x</c> lo sabe por la directiva <c>equalities SQUARE_1</c>.)</p>
+
+<h2>Lo que no lo es: dividir y sacar raíces</h2>
+<p>La división exige saber que el divisor no es cero, y eso ya no es un cálculo. Hay que citar un teorema y la hipótesis correspondiente. Los de la división están en <c>XCMPLX_1</c> (valen para números complejos y, por tanto, para reales):</p>
+<miz>
+theorem
+  a <> 0 implies a/a = 1 by XCMPLX_1:60;
+
+theorem
+  b <> 0 implies a/b*b = a by XCMPLX_1:87;
+</miz>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Referencia</th><th>Enunciado</th></tr></thead>
+<tbody>
+<tr><td><c>XCMPLX_1:6</c></td><td><c>a*b = 0 implies a = 0 or b = 0</c></td></tr>
+<tr><td><c>XCMPLX_1:60</c></td><td><c>a <> 0 implies a/a = 1</c></td></tr>
+<tr><td><c>XCMPLX_1:87</c></td><td><c>b <> 0 implies a/b*b = a</c></td></tr>
+<tr><td><c>XCMPLX_1:89</c></td><td><c>b <> 0 implies a = a*b/b</c></td></tr>
+<tr><td><c>XCMPLX_1:73</c></td><td><c>a*b = 1 implies a = 1/b</c></td></tr>
+<tr><td><c>XCMPLX_1:116</c></td><td><c>b <> 0 & d <> 0 implies a/b + c/d = (a*d + c*b)/(b*d)</c></td></tr>
+<tr><td><c>SQUARE_1:def 2</c></td><td>si <c>0 <= a</c>: <c>0 <= sqrt a & (sqrt a)^2 = a</c></td></tr>
+<tr><td><c>SQUARE_1:22</c></td><td><c>0 <= a implies sqrt a^2 = a</c></td></tr>
+<tr><td><c>SQUARE_1:29</c></td><td><c>0 <= a & 0 <= b implies sqrt(a*b) = sqrt a * sqrt b</c></td></tr>
+</tbody></table></div>
+<p>Curiosidad: en Mizar la división es una función total y <c>1/0 = 0</c>. No hay contradicción, porque los teoremas útiles sobre la división llevan la hipótesis <c>b <> 0</c>.</p>
+
+<h2>Igualdades iteradas</h2>
+<p>Una cuenta de varios pasos se escribe como en la pizarra. El primer signo es <c>=</c> y los siguientes <c>.=</c>; cada tramo lleva su propia justificación y sólo el último lleva punto y coma:</p>
+<miz>
+theorem
+  a <> 0 implies (a^2 - a)/a + 1 = a
+proof
+  assume
+A1: a <> 0;
+  (a^2 - a)/a + 1 = (a - 1)*a/a + 1
+    .= (a - 1) + 1 by A1,XCMPLX_1:89
+    .= a;
+  hence thesis;
+end;
+</miz>
+<p>El primer tramo y el último son polinómicos y van sin justificar. El del medio cancela <c>a</c> con <c>XCMPLX_1:89</c>, que necesita <c>a <> 0</c>. La cadena entera es un único paso que afirma «primer término = último término», y se puede etiquetar o encabezar con <c>thus</c> como cualquier otro.</p>
+<div class="nota"><b>Truco</b>
+<p>Reescribir a mano una expresión en la forma exacta del teorema que se va a citar, como aquí <c>(a - 1)*a/a</c>, es lo que más ayuda al verificador. El paso de reescritura suele ser gratis.</p></div>
+
+<div class="practica" data-archivo="t07_igu"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l07a"></div>
+<div class="quiz" data-id="l07b"></div>
+</section>
+
+<!-- ===================== LECCIÓN 8 ===================== -->
+<section class="vista" id="v-l08" data-titulo="Desigualdades y la MML" hidden>
+<p class="sobre">Lección 8 <span class="man">· Manual, §1.7.2</span></p>
+<h1>Desigualdades y búsqueda en la MML</h1>
+<p class="entrada">Las desigualdades se justifican con teoremas de la biblioteca. Encontrar el teorema adecuado es, según el propio manual, la parte más difícil de escribir en Mizar.</p>
+
+<h2>Sinónimos, antónimos y propiedades</h2>
+<p>La MML define un solo predicado de orden, <c><=</c>. Los demás son otras maneras de escribirlo:</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Se escribe</th><th>Mizar lee</th><th>Declarado como</th></tr></thead>
+<tbody>
+<tr><td><c>a >= b</c></td><td><c>b <= a</c></td><td>sinónimo</td></tr>
+<tr><td><c>a < b</c></td><td><c>not b <= a</c></td><td>antónimo</td></tr>
+<tr><td><c>a > b</c></td><td><c>not a <= b</c></td><td>antónimo</td></tr>
+</tbody></table></div>
+<p>Además, la definición de <c><=</c> declara dos <strong>propiedades</strong> que el verificador usa sin que se le pida: <em>reflexividad</em> (<c>a <= a</c>) y <em>conexidad</em> (<c>a <= b or b <= a</c>). De ahí salen gratis hechos como <c>a < b implies a <= b</c> y <c>a < b implies a <> b</c>. Con <c>requirements REAL</c> también compara numerales: <c>3 < 5</c>, <c>1/2 < 1</c>.</p>
+<p>Todo lo demás requiere un teorema; ni siquiera la transitividad es automática.</p>
+
+<h2>Un teorema, muchas lecturas</h2>
+<p>Como <c><</c> es la negación de <c><=</c>, un teorema sirve también por su contrarrecíproca. La transitividad es <c>XXREAL_0:2</c>:</p>
+<miz>
+theorem :: XXREAL_0:2
+  a <= b & b <= c implies a <= c;
+</miz>
+<p>¿Y la versión mixta, <c>a < b & b <= c implies a < c</c>? Es el mismo teorema. Escrita sin antónimos dice «<c>not b <= a</c> y <c>b <= c</c> implican <c>not c <= a</c>», que equivale a «<c>b <= c</c> y <c>c <= a</c> implican <c>b <= a</c>»: la transitividad con otras letras.</p>
+<miz>
+theorem
+  a < b & b <= c implies a < c by XXREAL_0:2;
+</miz>
+<p>Ejemplo completo: 2<em>ab</em> ≤ <em>a</em>² + <em>b</em>², porque (<em>a</em> − <em>b</em>)² ≥ 0.</p>
+<miz>
+theorem DosAB:
+  2*a*b <= a^2 + b^2
+proof
+  0 <= (a - b)*(a - b) by XREAL_1:63;
+  then 0 <= (a^2 + b^2) - 2*a*b;
+  hence thesis by XREAL_1:49;
+end;
+</miz>
+<p><c>XREAL_1:63</c> dice <c>0 <= a*a</c>. El segundo paso sólo reescribe el polinomio. <c>XREAL_1:49</c> dice <c>a < b implies a-b < 0</c>; leído al revés, «si <c>0 <= a-b</c> entonces <c>b <= a</c>», que es justo lo que hace falta.</p>
+
+<h2>Dónde buscar</h2>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Artículo</th><th>Contenido</th><th>Ejemplos</th></tr></thead>
+<tbody>
+<tr><td><c>XXREAL_0</c></td><td>El orden: transitividad, antisimetría, <c>min</c>, <c>max</c></td><td><c>:1</c> antisimetría · <c>:2</c> transitividad · <c>:17</c> <c>min(a,b) <= a</c></td></tr>
+<tr><td><c>XREAL_1</c></td><td>El orden y las operaciones</td><td><c>:6</c> sumar a ambos lados · <c>:7</c> sumar desigualdades · <c>:64</c> multiplicar por <c>c >= 0</c> · <c>:63</c> <c>0 <= a*a</c></td></tr>
+<tr><td><c>XCMPLX_1</c></td><td>Igualdades con +, −, ·, /</td><td>ver la <a href="#l07">lección 7</a></td></tr>
+<tr><td><c>SQUARE_1</c></td><td>Cuadrados y raíces</td><td><c>:15</c> <c>0 <= x & x <= y implies x^2 <= y^2</c> · <c>:26</c> monotonía de <c>sqrt</c></td></tr>
+<tr><td><c>COMPLEX1</c>, <c>ABSVALUE</c></td><td>Valor absoluto</td><td><c>COMPLEX1:56</c> desigualdad triangular · <c>:65</c> <c>|.a*b.| = |.a.|*|.b.|</c> · <c>ABSVALUE:5</c></td></tr>
+<tr><td><c>NAT_1</c>, <c>INT_1</c></td><td>Naturales y enteros</td><td><c>NAT_1:2</c> <c>0 <= n</c> · <c>NAT_1:13</c> <c>i < j + 1 iff i <= j</c></td></tr>
+</tbody></table></div>
+<p>La MML está ordenada cronológicamente, no por temas, así que la herramienta básica es buscar texto en los resúmenes (<c>.abs</c>), que contienen los enunciados sin las demostraciones. El guion <c>mml.py</c> lo hace por ti:</p>
+<miz>
+./mml.py XREAL_1:63 XREAL_1:49           :: ver teoremas por su referencia
+./mml.py -g 'c/b < c/a' XREAL_1          :: buscar por expresión regular en un artículo
+./mml.py -g 'sqrt .* <= sqrt'            :: buscar en toda la MML
+</miz>
+<p>Tres consejos: busca con los nombres de variable del artículo (casi siempre <c>a</c>, <c>b</c>, <c>c</c> o <c>x</c>, <c>y</c>); prueba el enunciado girado, porque quizá esté su contrarrecíproca; y si no aparece, tal vez no haga falta, porque ya lo cubren las propiedades o los requisitos.</p>
+
+<div class="practica" data-archivo="t08_des"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l08a"></div>
+<div class="quiz" data-id="l08b"></div>
+</section>
+
+<!-- ===================== LECCIÓN 9 ===================== -->
+<section class="vista" id="v-l09" data-titulo="Ecuaciones polinómicas" hidden>
+<p class="sobre">Lección 9 <span class="man">· Práctica de los pasos 6 y 7</span></p>
+<h1>Ecuaciones polinómicas</h1>
+<p class="entrada">Resolver una ecuación es demostrar una equivalencia: la ecuación se cumple si y sólo si la incógnita es una de las raíces.</p>
+
+<h2>La forma del enunciado</h2>
+<miz>
+theorem
+  x^2 - 5*x + 6 = 0 iff x = 2 or x = 3
+</miz>
+<p>La implicación de izquierda a derecha dice que no hay más soluciones que esas. La de derecha a izquierda, que esas lo son. Las dos hacen falta, y la demostración tiene la forma <c>hereby … end;</c> más la vuelta, como en la <a href="#l04">lección 4</a>.</p>
+
+<h2>Lineales: casi todo es automático</h2>
+<p>Con coeficientes numéricos el verificador resuelve solo, incluso sistemas:</p>
+<miz>
+theorem
+  2*x + 3 = 11 iff x = 4;
+
+theorem
+  2*x + y = 7 & x - y = 2 implies x = 3 & y = 1;
+</miz>
+<p>Con coeficientes literales hay que dividir, y por tanto citar teoremas (<a href="#l07">lección 7</a>):</p>
+<miz>
+theorem Lineal:
+  a <> 0 implies (a*x + b = 0 iff x = (-b)/a)
+proof
+  assume
+A1: a <> 0;
+  hereby
+    assume a*x + b = 0;
+    then x*a = -b;
+    hence x = (-b)/a by A1,XCMPLX_1:89;
+  end;
+  assume x = (-b)/a;
+  then x*a = -b by A1,XCMPLX_1:87;
+  hence thesis;
+end;
+</miz>
+
+<h2>Cuadráticas: factorizar</h2>
+<p>La herramienta es <c>XCMPLX_1:6</c>: si un producto es cero, alguno de los factores es cero. La factorización es una identidad polinómica, así que el verificador la comprueba sin ayuda. El trabajo creativo, encontrarla, es tuyo.</p>
+<miz>
+theorem
+  x^2 - 5*x + 6 = 0 iff x = 2 or x = 3
+proof
+A1: x^2 - 5*x + 6 = (x - 2)*(x - 3);
+  hereby
+    assume x^2 - 5*x + 6 = 0;
+    then x - 2 = 0 or x - 3 = 0 by A1,XCMPLX_1:6;
+    hence x = 2 or x = 3;
+  end;
+  assume x = 2 or x = 3;
+  then x - 2 = 0 or x - 3 = 0;
+  hence thesis by A1;
+end;
+</miz>
+<p>Observa los pasos «gratis»: de <c>x - 2 = 0</c> a <c>x = 2</c> es aritmética lineal, y de <c>x - 2 = 0 or x - 3 = 0</c> a que el producto es cero también.</p>
+<p>Cuando no hay raíces reales se completa el cuadrado y se usa que un cuadrado no es negativo (<c>XREAL_1:63</c>). Cuando las raíces son irracionales, la factorización usa <c>sqrt</c> y necesita <c>SQUARE_1:def 2</c> para saber que <c>(sqrt 2)^2 = 2</c>. Los ejercicios recorren esos casos.</p>
+<div class="nota"><b>Más lejos</b>
+<p>Con este mismo esquema se demuestra la fórmula resolvente general: si <c>a <> 0</c> y el discriminante no es negativo, se factoriza <c>a*x^2 + b*x + c</c> como <c>a*((x - x1)*(x - x2))</c>, con <c>x1</c> y <c>x2</c> escritos con <c>sqrt</c>. La MML tiene su propia versión en el artículo <c>POLYEQ_1</c>.</p></div>
+
+<div class="practica" data-archivo="t09_ecu"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l09a"></div>
+</section>

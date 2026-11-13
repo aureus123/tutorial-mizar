@@ -1,0 +1,167 @@
+:: ====================================================================
+::  Tutorial de Mizar - Lección 4: justificaciones
+:: ====================================================================
+::  Un paso se puede justificar de tres maneras:
+::     enunciado;                     (Mizar se las arregla solo)
+::     enunciado by A1,A2;            (se deduce de los pasos citados)
+::     enunciado proof ... end;       (con una subdemostración)
+::  Además:  then  = "por el paso anterior";   hence = then + thus;
+::           thesis = lo que falta demostrar;  hereby = thus + now.
+
+environ
+
+begin
+
+reserve x,y,z,s for object;
+reserve X,Y,Z for set;
+
+:: Ejemplo: encadenar pasos con then y hence, sin etiquetas.
+
+theorem
+  (for x holds x in X implies x in Y) & (for x holds x in Y implies x in Z)
+    & s in X implies s in Z
+proof
+  assume that
+A1: for x holds x in X implies x in Y and
+A2: for x holds x in Y implies x in Z and
+A3: s in X;
+  s in Y by A1,A3;
+  hence s in Z by A2;
+end;
+
+:: Ejemplo: una subdemostración (proof ... end) para un paso intermedio.
+:: Dentro de ella, "thesis" es el enunciado que se está justificando.
+
+theorem
+  (for x holds x in X implies x in Y) & (for x holds x in Y implies x in Z)
+    & (for x holds x in X) implies for x holds x in Z
+proof
+  assume that
+A1: for x holds x in X implies x in Y and
+A2: for x holds x in Y implies x in Z and
+A3: for x holds x in X;
+A4: for x holds x in Y
+  proof
+    let x;
+    x in X by A3;
+    hence thesis by A1;
+  end;
+  let x;
+  x in Y by A4;
+  hence x in Z by A2;
+end;
+
+theorem
+  (for x holds x in X implies x in Y) & (for x holds x in Y implies x in Z)
+    & (for x holds x in Z implies x in X) & s in Y implies s in X
+proof
+  assume that
+A1: for x holds x in X implies x in Y and
+A2: for x holds x in Y implies x in Z and
+A3: for x holds x in Z implies x in X and
+A4: s in Y;
+  ::@ej 1 | Completa la demostración en dos renglones, sin etiquetas
+  ::@ nuevas: primero un paso intermedio "s in Z" y después la conclusión
+  ::@ con "hence".
+  ::@pista El paso intermedio se justifica con dos de las hipótesis: <code>s in Z by A2,A4;</code>
+  ::@pista <code>hence s in X by A3;</code> usa el paso anterior (por el <em>then</em> que lleva dentro) más la hipótesis A3.
+  ::@sol
+  s in Z by A2,A4;
+  hence s in X by A3;
+  ::@fin
+end;
+
+:: Ejemplo: un "si y sólo si" se demuestra en dos partes. La primera
+:: implicación va en un bloque "hereby ... end;" y la segunda a
+:: continuación.
+
+theorem
+  (for x holds x in X & x in Y) iff
+    (for x holds x in X) & (for x holds x in Y)
+proof
+  hereby
+    assume
+A1: for x holds x in X & x in Y;
+    thus for x holds x in X by A1;
+    thus for x holds x in Y by A1;
+  end;
+  assume
+A2: (for x holds x in X) & (for x holds x in Y);
+  let x;
+  thus x in X & x in Y by A2;
+end;
+
+theorem
+  (for x holds x in X implies x in Y) iff
+    (for x holds not x in Y implies not x in X)
+proof
+  hereby
+    assume
+A1: for x holds x in X implies x in Y;
+    let x;
+    assume not x in Y;
+    hence not x in X by A1;
+  end;
+  ::@ej 2 | Escribe la segunda mitad de la demostración: la
+  ::@ implicación de derecha a izquierda (cuatro pasos, como en el
+  ::@ bloque hereby).
+  ::@pista Empieza suponiendo el lado derecho con una etiqueta: <code>assume</code> / <code>A2: for x holds not x in Y implies not x in X;</code>
+  ::@pista Lo que queda por demostrar es <code>for x holds x in X implies x in Y</code>: un <code>let x;</code>, un <code>assume x in X;</code> y la conclusión <code>hence x in Y by A2;</code>
+  ::@sol
+  assume
+A2: for x holds not x in Y implies not x in X;
+  let x;
+  assume x in X;
+  hence x in Y by A2;
+  ::@fin
+end;
+
+:: El justificador "by" da pasos pequeños: en cada paso sólo puede
+:: particularizar UNA de las premisas universales ("for ..."). Si hay que
+:: encadenar varias, se lo ayuda con pasos intermedios.
+
+reserve W for set;
+
+theorem
+  (for x holds x in X implies x in Y) & (for x holds x in Y implies x in Z)
+    & (for x holds x in Z implies x in W) & s in X implies s in W
+proof
+  assume that
+A1: for x holds x in X implies x in Y and
+A2: for x holds x in Y implies x in Z and
+A3: for x holds x in Z implies x in W and
+A4: s in X;
+  ::@ej 3 | El paso "thus s in W by A1,A2,A3,A4;" es correcto para un
+  ::@ humano, pero Mizar lo rechaza (*4): exige usar tres premisas
+  ::@ universales de una vez. Sustitúyelo por tres pasos encadenados
+  ::@ con then (el último, con hence), usando una premisa universal en
+  ::@ cada uno.
+  ::@pista Primer paso: <code>s in Y by A1,A4;</code>
+  ::@pista Segundo paso: <code>then s in Z by A2;</code>
+  ::@pista Conclusión: <code>hence s in W by A3;</code>
+  ::@sol
+  s in Y by A1,A4;
+  then s in Z by A2;
+  hence s in W by A3;
+  ::@alt
+  thus s in W by A1,A2,A3,A4;
+  ::@fin
+end;
+
+:: "now ... end;" es una subdemostración cuyo enunciado no se escribe:
+:: Mizar lo reconstruye a partir de los pasos de esqueleto que contiene.
+
+theorem
+  (for x holds x in X implies x in Y) & (for x holds x in X)
+    implies for x holds x in Y
+proof
+  assume that
+A1: for x holds x in X implies x in Y and
+A2: for x holds x in X;
+  now
+    let x;
+    x in X by A2;
+    hence x in Y by A1;
+  end;
+  hence thesis;
+end;

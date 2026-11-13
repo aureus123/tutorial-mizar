@@ -1,0 +1,321 @@
+<!-- ===================== LECCIÓN 10 ===================== -->
+<section class="vista" id="v-l10" data-titulo="Conjuntos" hidden>
+<p class="sobre">Lección 10 <span class="man">· Manual, §1.7.4</span></p>
+<h1>Conjuntos</h1>
+<p class="entrada">Mizar está construido sobre la teoría de conjuntos. Aquí se demuestran inclusiones e igualdades «persiguiendo elementos», y se ve cómo las definiciones se despliegan solas.</p>
+
+<h2>El vocabulario de conjuntos</h2>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Matemática</th><th>Mizar</th><th>Pertenecer significa…</th><th>Referencia</th></tr></thead>
+<tbody>
+<tr><td class="mat">X ∪ Y</td><td><c>X \/ Y</c></td><td><c>x in X or x in Y</c></td><td><c>XBOOLE_0:def 3</c></td></tr>
+<tr><td class="mat">X ∩ Y</td><td><c>X /\ Y</c></td><td><c>x in X & x in Y</c></td><td><c>XBOOLE_0:def 4</c></td></tr>
+<tr><td class="mat">X ∖ Y</td><td><c>X \ Y</c></td><td><c>x in X & not x in Y</c></td><td><c>XBOOLE_0:def 5</c></td></tr>
+<tr><td class="mat">{y}</td><td><c>{y}</c></td><td><c>x = y</c></td><td><c>TARSKI:def 1</c></td></tr>
+<tr><td class="mat">{y, z}</td><td><c>{y,z}</c></td><td><c>x = y or x = z</c></td><td><c>TARSKI:def 2</c></td></tr>
+<tr><td class="mat">𝒫(X)</td><td><c>bool X</c></td><td><c>Z in bool X iff Z c= X</c></td><td><c>ZFMISC_1:def 1</c></td></tr>
+<tr><td class="mat">X × Y</td><td><c>[:X,Y:]</c></td><td>pares <c>[x,y]</c></td><td><c>ZFMISC_1:def 2</c></td></tr>
+<tr><td class="mat">X ⊆ Y</td><td><c>X c= Y</c></td><td><c>for x being object holds x in X implies x in Y</c></td><td><c>TARSKI:def 3</c></td></tr>
+<tr><td class="mat">X = Y</td><td><c>X = Y</c></td><td><c>X c= Y & Y c= X</c></td><td><c>XBOOLE_0:def 10</c></td></tr>
+</tbody></table></div>
+<p>La columna de la derecha es la clave de la lección: cada <strong>definición</strong> de la MML se puede citar como si fuera un teorema, con la forma <c>ARTICULO:def N</c>. Citar <c>XBOOLE_0:def 4</c> permite pasar de <c>x in X /\ Y</c> a <c>x in X & x in Y</c> y viceversa.</p>
+<p>Los axiomas de la teoría (Tarski–Grothendieck: los de Zermelo–Fraenkel más un axioma que garantiza cardinales grandes) están en los artículos <c>TARSKI_0</c> y <c>TARSKI_A</c>; <c>TARSKI</c> deduce de ellos las construcciones básicas. Nunca hace falta citarlos directamente.</p>
+
+<h2>Demostrar una inclusión</h2>
+<p>Para probar <c>X c= Y</c> se toma un elemento cualquiera de <c>X</c> y se prueba que está en <c>Y</c>:</p>
+<miz>
+theorem
+  X /\ Y c= X
+proof
+  let x;
+  assume x in X /\ Y;
+  hence x in X by XBOOLE_0:def 4;
+end;
+</miz>
+<p>Hay algo raro aquí. La tesis es <c>X /\ Y c= X</c>, que no empieza por <c>for</c>, y sin embargo la demostración empieza con <c>let</c>. Funciona porque el entorno tiene</p>
+<miz>
+ definitions TARSKI, XBOOLE_0;
+</miz>
+<p>Con esa directiva, cuando un paso de esqueleto no encaja con la tesis, Mizar prueba a <strong>desplegar la definición</strong> del predicado principal. Despliega <c>c=</c> según <c>TARSKI:def 3</c> y la tesis pasa a ser <c>for x being object holds x in X /\ Y implies x in X</c>, donde el <c>let</c> y el <c>assume</c> ya encajan. Sin la directiva, ese <c>let</c> daría <span class="chip">*55</span>.</p>
+
+<h2>Demostrar una igualdad</h2>
+<p>Con <c>definitions XBOOLE_0</c> la tesis <c>X = Y</c> se despliega en <c>X c= Y & Y c= X</c>: dos inclusiones. Se pueden dar con dos <c>thus</c>, o directamente persiguiendo elementos, con <c>hereby</c> para la primera:</p>
+<miz>
+theorem
+  X \/ Y = Y \/ X
+proof
+  hereby
+    let x;
+    assume x in X \/ Y;
+    then x in X or x in Y by XBOOLE_0:def 3;
+    hence x in Y \/ X by XBOOLE_0:def 3;
+  end;
+  let x;
+  assume x in Y \/ X;
+  then x in Y or x in X by XBOOLE_0:def 3;
+  hence x in X \/ Y by XBOOLE_0:def 3;
+end;
+</miz>
+<p>(En realidad este teorema no necesita demostración: la unión se definió con la propiedad <c>commutativity</c>, de modo que para el verificador <c>X \/ Y</c> y <c>Y \/ X</c> son el mismo término.)</p>
+
+<h2>Tres directivas que despliegan definiciones</h2>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Directiva</th><th>Qué despliega</th><th>Cuándo</th></tr></thead>
+<tbody>
+<tr><td><c>definitions A;</c></td><td>predicados y atributos <c>means</c> de <c>A</c></td><td>En la <strong>tesis</strong>, cuando un paso de esqueleto no encaja con ella.</td></tr>
+<tr><td><c>expansions A;</c></td><td>predicados y atributos <c>means</c> de <c>A</c></td><td>En las <strong>inferencias</strong>: <c>by</c> los despliega solo. Con <c>expansions TARSKI</c>, de <c>X c= Y</c> y <c>x in X</c> sale <c>x in Y</c> sin citar nada.</td></tr>
+<tr><td><c>equalities A;</c></td><td>functores <c>equals</c> de <c>A</c></td><td>En las inferencias: <c>x^2</c> se trata como <c>x*x</c>.</td></tr>
+</tbody></table></div>
+<p>Los functores definidos con <c>means</c> nunca se despliegan solos: siempre hay que citar su definición. Y las definiciones del propio artículo no necesitan directiva; están disponibles desde que se escriben. En esta lección el entorno no usa <c>expansions</c>, para que practiques citando <c>TARSKI:def 3</c> a mano.</p>
+
+<h2>No reinventar</h2>
+<p>Las leyes del álgebra de conjuntos están en <c>XBOOLE_1</c> (un centenar de teoremas) y lo relativo a unitarios, pares y partes en <c>ZFMISC_1</c>. En un artículo de verdad se citan. Además, <c>requirements BOOLE</c> le enseña al verificador las propiedades del vacío: <c>X \/ {} = X</c>, <c>X /\ {} = {}</c>.</p>
+
+<div class="practica" data-archivo="t10_conj"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l10a"></div>
+<div class="quiz" data-id="l10b"></div>
+</section>
+
+<!-- ===================== LECCIÓN 11 ===================== -->
+<section class="vista" id="v-l11" data-titulo="Definiciones" hidden>
+<p class="sobre">Lección 11 <span class="man">· Manual, paso 5 (§1.5)</span></p>
+<h1>Definiciones</h1>
+<p class="entrada">Cómo introducir nociones propias: functores, predicados, atributos y modos, cada uno con su símbolo en el vocabulario y sus condiciones de corrección.</p>
+
+<h2>Primero, el símbolo</h2>
+<p>Casi toda definición introduce un símbolo nuevo, y los símbolos se declaran fuera del artículo, en un archivo de vocabulario <c>dict/NOMBRE.voc</c>. Cada renglón es una letra que indica la clase, seguida del símbolo:</p>
+<div class="arbol">Omedia        <span>O: functor</span>
+Omitad
+Rdivide_a     <span>R: predicado</span>
+Vcuadrado     <span>V: atributo</span>
+MDivisor      <span>M: modo</span></div>
+<p>El artículo lo importa por su nombre en mayúsculas: <c>vocabularies …, T11_DEF;</c>. Un símbolo puede contener casi cualquier carácter (<c>|^</c>, <c>c=</c>, <c>are_coprime</c>), y una vez declarado deja de poder usarse como nombre de variable.</p>
+
+<h2>Functores</h2>
+<p>Hay dos maneras. La primera es como <strong>abreviatura</strong> de una expresión, con <c>equals</c>:</p>
+<miz>
+definition
+  let a,b be Real;
+  func media(a,b) -> Real equals
+  (a + b)/2;
+  coherence;
+  commutativity;
+end;
+</miz>
+<p>Los <c>let</c> declaran los argumentos. Después de <c>-></c> va el tipo del resultado. <c>coherence</c> es la <strong>condición de corrección</strong>: hay que demostrar que la expresión tiene realmente ese tipo. Aquí Mizar lo ve solo y basta el punto y coma; si no, se escribe <c>coherence proof … end;</c>. La línea <c>commutativity;</c> declara una propiedad, y se explica en la <a href="#l12">lección siguiente</a>.</p>
+<p>La segunda manera es por una <strong>propiedad característica</strong>, con <c>means</c>. La palabra <c>it</c> representa al objeto que se está definiendo:</p>
+<miz>
+definition
+  let a be Real;
+  func mitad a -> Real means
+:DefMitad:
+  2*it = a;
+  existence
+  proof
+    take a/2;
+    thus thesis;
+  end;
+  uniqueness;
+end;
+</miz>
+<p>Ahora las condiciones son dos: <c>existence</c> (hay un real con esa propiedad) y <c>uniqueness</c> (no hay dos). La etiqueta <c>:DefMitad:</c>, entre dos puntos, da nombre a la definición para citarla después: un functor <c>means</c> sólo se usa citando su definición.</p>
+<miz>
+theorem
+  mitad 6 = 3
+proof
+  2*3 = 6;
+  hence thesis by DefMitad;
+end;
+</miz>
+
+<h2>Predicados</h2>
+<miz>
+definition
+  let m,n be Integer;
+  pred m divide_a n means
+:DefDiv:
+  ex k being Integer st n = m*k;
+  reflexivity
+  proof
+    let m be Integer;
+    take 1;
+    thus m = m*1;
+  end;
+end;
+</miz>
+<p>Un predicado no tiene condiciones de corrección: cualquier fórmula sirve. Lo que sí puede llevar son propiedades, como <c>reflexivity</c>, que hay que demostrar. Para usar el predicado se cita la definición en los dos sentidos: de <c>m divide_a n</c> se obtiene el <c>ex k</c> (y se le da nombre con <c>consider</c>), y de una igualdad <c>n = m*k</c> se obtiene <c>m divide_a n</c>.</p>
+
+<h2>Atributos</h2>
+<miz>
+definition
+  let n be Nat;
+  attr n is cuadrado means
+:DefCuad:
+  ex m being Nat st n = m^2;
+end;
+</miz>
+<p>Un atributo es un adjetivo. Se usa en fórmulas (<c>9 is cuadrado</c>) y, con algo más de trabajo (<a href="#l12">lección 12</a>), dentro de los tipos (<c>cuadrado Nat</c>).</p>
+
+<h2>Modos</h2>
+<miz>
+definition
+  let n be Integer;
+  mode Divisor of n -> Integer means
+:DefDivisor:
+  it divide_a n;
+  existence;
+end;
+</miz>
+<p>Un modo es un tipo nuevo; éste depende de un argumento, que va después de <c>of</c>. En Mizar <strong>ningún tipo puede ser vacío</strong>: por eso el modo lleva la condición <c>existence</c> (existe al menos un divisor de <c>n</c>). Aquí es automática, porque <c>n divide_a n</c> por la reflexividad.</p>
+<p>También se puede definir un modo como abreviatura de otro tipo, con <c>is</c>. Así define la MML los números naturales y los grupos:</p>
+<miz>
+definition
+  mode Nat is natural Number;
+end;
+</miz>
+
+<h2>Teoremas y lemas</h2>
+<p>Un enunciado con la palabra <c>theorem</c> se exporta: otros artículos podrán citarlo. Un enunciado con etiqueta pero sin <c>theorem</c> es un <strong>lema</strong> privado; por costumbre se etiquetan <c>Lm1</c>, <c>Lm2</c>…</p>
+<miz>
+Lm1: a <= b implies a + a <= a + b & a + b <= b + b by XREAL_1:6;
+</miz>
+
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Se define</th><th>Con</th><th>Condiciones de corrección</th><th>¿Se despliega sola?</th></tr></thead>
+<tbody>
+<tr><td>functor</td><td><c>func … equals</c></td><td><c>coherence</c></td><td>sí (en el mismo artículo, o con <c>equalities</c>)</td></tr>
+<tr><td>functor</td><td><c>func … means</c></td><td><c>existence</c>, <c>uniqueness</c></td><td>nunca: se cita</td></tr>
+<tr><td>predicado</td><td><c>pred … means</c></td><td>ninguna</td><td>en la tesis y con <c>expansions</c></td></tr>
+<tr><td>atributo</td><td><c>attr … means</c></td><td>ninguna</td><td>en la tesis y con <c>expansions</c></td></tr>
+<tr><td>modo</td><td><c>mode … is</c></td><td>ninguna</td><td>siempre: es una abreviatura</td></tr>
+<tr><td>modo</td><td><c>mode … means</c></td><td><c>existence</c></td><td>en la tesis</td></tr>
+</tbody></table></div>
+
+<div class="practica" data-archivo="t11_def"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l11a"></div>
+<div class="quiz" data-id="l11b"></div>
+</section>
+
+<!-- ===================== LECCIÓN 12 ===================== -->
+<section class="vista" id="v-l12" data-titulo="Registros y propiedades" hidden>
+<p class="sobre">Lección 12 <span class="man">· Manual, §1.4.2, §1.7.2 y §1.7.3</span></p>
+<h1>Registros, propiedades y cambios de tipo</h1>
+<p class="entrada">Buena parte de la automatización de Mizar consiste en calcular adjetivos. Los registros le enseñan cómo, y convierten teoremas en hechos que ya no hay que citar.</p>
+
+<h2>El problema</h2>
+<p>Definamos un adjetivo para los números del intervalo [0, 1], como las probabilidades:</p>
+<miz>
+definition
+  let x be Real;
+  attr x is unitario means
+:DefU:
+  0 <= x & x <= 1;
+end;
+</miz>
+<p>Nos gustaría escribir <c>for p,q being unitario Real holds …</c> y que Mizar supiera, sin decírselo cada vez, que <c>p*q</c> y <c>1 - p</c> también son unitarios. Para eso están los <strong>registros</strong> (<em>clusters</em>), que van en bloques <c>registration … end;</c>. Hay tres clases.</p>
+
+<h2>Registro existencial</h2>
+<miz>
+registration
+  cluster unitario for Real;
+  existence
+  proof
+    take 0;
+    thus thesis by DefU;
+  end;
+end;
+</miz>
+<p>Afirma que existe un <c>Real</c> que es <c>unitario</c>. Como los tipos no pueden ser vacíos, sin este registro el tipo <c>unitario Real</c> ni siquiera se puede escribir: Mizar da <span class="chip">*136</span> <em>Non registered cluster</em>.</p>
+
+<h2>Registro condicional</h2>
+<miz>
+registration
+  cluster unitario -> non negative for Real;
+  coherence by DefU;
+end;
+</miz>
+<p>Todo <c>Real</c> que es <c>unitario</c> es también <c>non negative</c>. Desde aquí, cualquier término de tipo <c>unitario Real</c> recibe además ese adjetivo, y con él todo lo que la MML sabe de los números no negativos.</p>
+
+<h2>Registro funcional</h2>
+<miz>
+registration
+  let p,q be unitario Real;
+  cluster p*q -> unitario;
+  coherence
+  proof
+A1: 0 <= p & p <= 1 & 0 <= q & q <= 1 by DefU;
+    then
+A2: 0 <= p*q by XREAL_1:127;
+    p*q <= 1*1 by A1,XREAL_1:66;
+    hence thesis by A2,DefU;
+  end;
+end;
+</miz>
+<p>Un término de la forma <c>p*q</c>, con <c>p</c> y <c>q</c> unitarios, es unitario. Con otro registro análogo para <c>1 - p</c>, Mizar encadena los dos y esto ya no necesita demostración:</p>
+<miz>
+theorem
+  1 - (1 - p)*(1 - q) is unitario;
+</miz>
+<p>Es la probabilidad de la unión de dos sucesos independientes. El verificador recorre el término de dentro hacia fuera aplicando registros: <c>1 - p</c> y <c>1 - q</c> son unitarios, su producto también, y su complemento también. Esta es la razón por la que en la MML muchos teoremas se enuncian como registros: quedan disponibles sin citarlos. También es la razón por la que un registro que falta en <c>registrations</c> produce errores de tipo misteriosos.</p>
+
+<h2>Redefiniciones</h2>
+<p>Los registros añaden adjetivos. Para precisar el <em>tipo base</em> del resultado de un functor se usa una <strong>redefinición</strong>. Por ejemplo, la composición de relaciones <c>g*f</c> es en general una <c>Relation</c>, pero la MML la redefine para que, si <c>f</c> y <c>g</c> son funciones entre conjuntos dados, el resultado sea una <c>Function of X,Z</c>. Cuando hay varias notaciones para un mismo símbolo, se aplica la última que encaja con los tipos de los argumentos, en el orden de la directiva <c>notations</c>.</p>
+
+<h2>Propiedades</h2>
+<p>Una definición puede declarar <strong>propiedades</strong> de lo definido. Hay que demostrarlas ahí mismo, y desde entonces el verificador las aplica sin que se citen.</p>
+<div class="tabla-caja"><table class="tabla">
+<thead><tr><th>Propiedad</th><th>Se aplica a</th><th>Efecto</th></tr></thead>
+<tbody>
+<tr><td><c>commutativity</c></td><td>functores binarios</td><td><c>f(a,b)</c> y <c>f(b,a)</c> son el mismo término</td></tr>
+<tr><td><c>idempotence</c></td><td>functores binarios</td><td><c>f(a,a) = a</c></td></tr>
+<tr><td><c>involutiveness</c></td><td>functores unarios</td><td><c>f(f(a)) = a</c></td></tr>
+<tr><td><c>reflexivity</c>, <c>irreflexivity</c></td><td>predicados binarios</td><td><c>a R a</c> siempre (o nunca)</td></tr>
+<tr><td><c>symmetry</c>, <c>asymmetry</c></td><td>predicados binarios</td><td>de <c>a R b</c> sale <c>b R a</c> (o su negación)</td></tr>
+<tr><td><c>connectedness</c></td><td>predicados binarios</td><td><c>a R b or b R a</c></td></tr>
+</tbody></table></div>
+<miz>
+definition
+  let x,y be Real;
+  pred x cerca_de y means
+:DefCerca:
+  |.x - y.| <= 1;
+  reflexivity
+  proof
+    let x be Real;
+    |.x - x.| = 0 by COMPLEX1:44;
+    hence thesis;
+  end;
+  symmetry
+  proof
+    let x,y be Real;
+    assume |.x - y.| <= 1;
+    hence thesis by COMPLEX1:60;
+  end;
+end;
+</miz>
+<p>Los <strong>sinónimos</strong> y <strong>antónimos</strong> se declaran en bloques <c>notation</c>. Así se obtienen <c><</c> y <c>>=</c> a partir de <c><=</c> en la MML, y así se define aquí «lejos»:</p>
+<miz>
+notation
+  let x,y be Real;
+  antonym x lejos_de y for x cerca_de y;
+end;
+</miz>
+
+<h2><c>reconsider</c>: cambiar el tipo de un término</h2>
+<p>A veces se sabe que un objeto tiene cierto tipo, pero su término no lo muestra. <c>reconsider</c> introduce un nombre nuevo para el mismo objeto con el tipo deseado, y hay que justificar que el cambio es legítimo:</p>
+<miz>
+  reconsider p1 = x, q1 = y as unitario Real by A1,DefU;
+</miz>
+<p>Desde ahí <c>p1</c> es <c>x</c> (el verificador sabe que son iguales), pero con tipo <c>unitario Real</c>, y los registros trabajan para él. Es el recurso habitual para pasar de «<c>n in NAT</c>» a «<c>n</c> es un <c>Nat</c>», o de un real a un <c>Element of REAL</c>.</p>
+<p>Su pariente sin cambio de tipo es <c>set</c>, que sólo abrevia: <c>set s = sqrt(b^2 - 4*a*c);</c> permite escribir <c>s</c> en adelante.</p>
+
+<div class="practica" data-archivo="t12_reg"></div>
+
+<h2>Compruébalo</h2>
+<div class="quiz" data-id="l12a"></div>
+<div class="quiz" data-id="l12b"></div>
+</section>
